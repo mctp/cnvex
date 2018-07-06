@@ -32,12 +32,11 @@ filterTargetGermlineHets <- function(var, tile, opts) {
         ## high 
         var$n.DP > 16 &
         var$t.DP > 16 &
-        ##
+        ## mappability
         (!var$mask.strict)
     ]
     return(var)
 }
-
 
 filterGermlineCont <- function(var) {
     var <- var[

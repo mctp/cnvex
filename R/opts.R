@@ -1,6 +1,7 @@
 getOpts <- function(target, opts=list()) {
     if (target=="onco1500-v3") {
         opts.default <- list(
+            sample=c(1,2),
             target=target,
             segment="joint",
             caller="vardict",
@@ -27,6 +28,7 @@ getOpts <- function(target, opts=list()) {
         )
     } else if (target=="agilent-v4") {
         opts.default <- list(
+            sample=c(1,2),
             target=target,
             segment="joint",
             caller="vardict",
@@ -53,6 +55,7 @@ getOpts <- function(target, opts=list()) {
         )
     } else if (target=="nextera-v1.2") {
         opts.default <- list(
+            sample=c(1,2),
             target=target,
             segment="joint",
             caller="vardict",
@@ -79,6 +82,7 @@ getOpts <- function(target, opts=list()) {
         )        
     } else if (target=="genome") {
         opts.default <- list(
+            sample=c(1,2),
             target=target,
             segment="joint",
             caller="vardict",

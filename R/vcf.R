@@ -2,6 +2,7 @@
     seqi <- keepStandardChromosomes(Seqinfo(genome="hg38"))
     seqi <- dropSeqlevels(seqi, opts$skip.chr)
     var <- readVcf(vcf, param=param)
+    var <- var[,opts$sample]
     shared.levels <- intersect(seqlevels(var), seqlevels(seqi))
     var <- keepSeqlevels(var, shared.levels, pruning.mode="coarse")
     seqlevels(var) <- seqlevels(seqi)
