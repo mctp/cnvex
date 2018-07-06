@@ -1,9 +1,7 @@
-#' gscars
+#' cnvex
 #'
-#' @name gscars
+#' @name cnvex
 #' @docType package
-#' @useDynLib gscars
-#' @importFrom Rcpp sourceCpp
 #' @importFrom parallel mclapply detectCores
 #' @importFrom rtracklayer import export
 #' @importFrom Rsamtools BamFile
