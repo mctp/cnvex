@@ -80,10 +80,10 @@
 
 .annotateTiles <- function(genome.tile, seqi, skip.chr) {
     
-    bl1.fn <- system.file("extdata/sv-blacklist-10x-hg38-ucsc.bed.gz", package="gscars")
-    bl2.fn <- system.file("extdata/hg38.blacklist.bed.gz", package="gscars")
-    cyto.fn <- system.file("extdata/hg38.cytoband.bed.gz", package="gscars")
-    strict.fn <- system.file("extdata/1000G-strict-unmask-hg38.bed.gz", package="gscars")
+    bl1.fn <- system.file("extdata/sv-blacklist-10x-hg38-ucsc.bed.gz", package="cnvex")
+    bl2.fn <- system.file("extdata/hg38.blacklist.bed.gz", package="cnvex")
+    cyto.fn <- system.file("extdata/hg38.cytoband.bed.gz", package="cnvex")
+    strict.fn <- system.file("extdata/1000G-strict-unmask-hg38.bed.gz", package="cnvex")
 
     ## blacklist
     bl.1 <- .robust.import(bl1.fn, seqi)

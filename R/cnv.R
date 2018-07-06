@@ -33,15 +33,15 @@ CNV <- function(opts, tn.vcf, t.bam, n.bam) {
 
     if (opts$target=="onco1500-v3") {
         target.fun <- .getTargetTiles
-        target.fn <- system.file(sprintf("extdata/onco1500-v3-targets-hg38-%s.bed", opts$chr.names), package="gscars")
+        target.fn <- system.file(sprintf("extdata/onco1500-v3-targets-hg38-%s.bed.gz", opts$chr.names), package="cnvex")
         snp.filter.fun <- filterTargetGermlineHets
     } else if (opts$target=="agilent-v4") {
         target.fun <- .getTargetTiles
-        target.fn <- system.file(sprintf("extdata/agilent-v4-targets-hg38-%s.bed", opts$chr.names), package="gscars")
+        target.fn <- system.file(sprintf("extdata/agilent-v4-targets-hg38-%s.bed.gz", opts$chr.names), package="cnvex")
         snp.filter.fun <- filterTargetGermlineHets
     } else if(opts$target=="nextera-v1.2") {
         target.fun <- .getTargetTiles
-        target.fn <- system.file(sprintf("extdata/nextera-v1.2-targets-hg38-%s.bed", opts$chr.names), package="gscars")
+        target.fn <- system.file(sprintf("extdata/nextera-v1.2-targets-hg38-%s.bed.gz", opts$chr.names), package="cnvex")
         snp.filter.fun <- filterTargetGermlineHets
     } else if (opts$target=="genome") {
         target.fun <- .getGenomeTiles

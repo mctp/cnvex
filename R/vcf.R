@@ -6,9 +6,9 @@
     var <- keepSeqlevels(var, shared.levels, pruning.mode="coarse")
     seqlevels(var) <- seqlevels(seqi)
     ## masked regions 1000G
-    pilot.fn <- system.file("extdata/1000G-pilot-unmask-hg38.bed.gz", package="gscars")
+    pilot.fn <- system.file("extdata/1000G-pilot-unmask-hg38.bed.gz", package="cnvex")
     pilot <- .robust.import(pilot.fn, seqi)
-    strict.fn <- system.file("extdata/1000G-strict-unmask-hg38.bed.gz", package="gscars")
+    strict.fn <- system.file("extdata/1000G-strict-unmask-hg38.bed.gz", package="cnvex")
     strict <- .robust.import(strict.fn, seqi)
     tmp <- DataFrame(Number=c("1","1"),
                      Type=c("Integer", "Integer"),
