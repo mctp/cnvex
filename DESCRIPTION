@@ -1,0 +1,9 @@
+Package: cnvex
+Title: CNVex
+Version: 0.0.0.9000
+Authors@R: person("Marcin", "Cieslik", email = "mcieslik@med.umich.edu", role = c("aut", "cre"))
+Description: CNVex
+Depends: R (>= 3.4.4)
+License: MIT License
+Encoding: UTF-8
+LazyData: true
