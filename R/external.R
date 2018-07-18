@@ -1,4 +1,4 @@
-.runMosdepth <- function(bam, by) {
+.runMosdepth <- function(bam, by, cores=4L) {
     if (is.character(by) && file.exists(by)) {
         out.col <- "V5"
     } else if (!is.na(suppressWarnings(as.integer(by))) ) {
@@ -7,8 +7,9 @@
         stop("by should be a file or window-size")
     }
     prefix <- tempfile("mosdepth_")
-    ret <- system2("mosdepth", sprintf("-F 772 -n -t4 -b %s %s %s", by, prefix, bam))
-    out.fn <- list.files(dirname(prefix), paste0(basename(prefix), ".regions.bed.gz$"), full.names = TRUE)
+    ret <- system2("mosdepth", sprintf("-F 772 -n -t%s -b %s %s %s", cores, by, prefix, bam))
+    out.fn <- list.files(dirname(prefix), paste0(basename(prefix), ".regions.bed.gz$"),
+                         full.names = TRUE)
     if (!ret & file.exists(out.fn)) {
         out <- fread(paste("zcat", out.fn))[[out.col]]
     } else {
@@ -22,10 +23,10 @@
     return(out)
 }
 
-.runMosdepthTile <- function(bam, gt) {
+.runMosdepthTile <- function(bam, gt, cores) {
     bed <- tempfile("mosdepth_", fileext=".bed")
     export(granges(gt), bed)
-    out <- .runMosdepth(bam, bed)
+    out <- .runMosdepth(bam, bed, cores)
     unlink(bed)
     return(out)
 }

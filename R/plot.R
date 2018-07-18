@@ -1,6 +1,6 @@
 plotGC <- function(cnv) {
     tmp <- as.data.table(mcols(cnv$tile))
-    tmp <- melt(tmp[,.(gc, blacklist, target, lr.raw, lr, lr.off=lr.raw-lr)], id.vars=c("gc", "blacklist", "target"))
+    tmp <- melt(tmp[,.(gc, blacklist, target, lr.raw, lr.gc, lr.off=lr.raw-lr.gc)], id.vars=c("gc", "blacklist", "target"))
     tmp[,delta:=FALSE]
     tmp[variable=="lr.off", delta:=TRUE]
     tmp[variable=="lr.off", variable:="lr.raw"]
@@ -18,8 +18,59 @@ plotGC <- function(cnv) {
     return(plt)
 }
 
-plotSeg <- function(sts, sel.chr=NULL, sel.lr="lr") {
-    gr <- unlist(sts$tile)
+plotCNV <- function(cnv, sel.lr="lr", sel.chr=NULL) {
+    ## input
+    gr <- unlist(cnv$tile)
+    if (!is.null(sel.chr)) {
+        gr <- gr[seqnames(gr) %in% sel.chr]
+    }
+    ## data
+    tbl <- data.table(
+        chr=as.character(seqnames(gr)),
+        pos=unlist(unname(lapply(lengths(split(gr, seqnames(gr))), seq_len))),#floor((start(gr)+end(gr))/2),
+        lr=ifelse(is.finite(mcols(gr)[[sel.lr]]), mcols(gr)[[sel.lr]], NA_real_),
+        baf=mcols(gr)[["baf"]],
+        tgt=mcols(gr)[["target"]]
+    )
+    tbl[,chr:=factor(chr, paste("chr", c(1:22, "X", "Y", "M"), sep=""), ordered=TRUE)]
+    tbl <- tbl[order(-tgt)]
+    
+    plt.lr <- ggplot(tbl) + facet_grid(.~chr, scales="free_x") +
+        aes(x=pos, y=lr, color=tgt) +
+        scale_color_manual(values=c("red", "black")) +
+        geom_point(size=0.5, alpha=0.5) +
+        coord_cartesian(ylim=c(min(-3, min(tbl$lr, na.rm=TRUE)),
+                               max (3, max(tbl$lr, na.rm=TRUE)))) +
+        coord_cartesian(ylim=c(-3,3)) +
+        geom_hline(yintercept = 0, color="blue") +
+        theme_pubr() +
+        theme(
+            panel.spacing = unit(0, "lines"),
+            axis.title.x=element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank()
+            
+        )
+    
+    plt.baf <- ggplot(tbl) + facet_grid(.~chr, scales="free_x") +
+        aes(x=pos, y=baf) +
+        geom_point(size=0.5, alpha=0.5) +
+        coord_cartesian(ylim=c(0,0.5)) + 
+        theme_pubr() +
+        theme(
+            panel.spacing = unit(0, "lines"),
+            axis.title.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank()
+        )
+    
+    
+    plt <- grid.arrange(plt.lr, plt.baf, ncol=1)
+    return(plt)
+}
+
+plotSeg <- function(cnv, sel.chr=NULL, sel.lr="lr") {
+    gr <- unlist(cnv$tile)
     l2r <- ifelse(is.finite(mcols(gr)[[sel.lr]]), mcols(gr)[[sel.lr]], NA_real_)
     baf <- mcols(gr)[["baf"]]
     tmp <- data.table(

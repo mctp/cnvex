@@ -4,7 +4,7 @@
               data.type = "logratio",
               sampleid = "sample")
     adj <- smooth.CNA(obj)$sample
-    
+    return(adj)
 }
 
 .smooth.outliers.gr <- function(gr, data.col) {
@@ -19,10 +19,10 @@
     1/x
 }
 
-.jointSegArm <- function(arm, K, min.seg, sd.lr, sd.baf, only.target=TRUE) {
+.jointSegArm <- function(arm, min.K, max.K, min.seg, sd.lr, sd.baf, only.target=TRUE) {
     ## make sure we have enough points to segment
-    max.K <- sum(!is.na(arm$lr) & !is.na(arm$baf))/10
-    K <- min(K, max.K)
+    opt.K <- ceiling(length(arm$lr)/100)
+    K <- min(max.K, max(min.K, opt.K))
     if (K>1) {
         ## initial segmentation
         arm.lr <- arm$lr
@@ -37,14 +37,15 @@
         len0 <- diff(bpt0)
         seg1 <- seg0[len0>=min.seg]
         if (length(seg1)>0) {
-            ## corner-
-            if ((length(arm)-tail(seg1, 1))<min.seg) {
+            ## corner-case
+            if ((length(arm)-tail(seg1, 1)) < min.seg) {
                 seg1 <- head(seg1, -1)
             }
             if (length(seg1)>0) {
                 bpt1 <- c(1, seg1 + 1)
                 len1 <- diff(c(bpt1, length(arm)+1))
                 idx1 <- rep(seq_along(bpt1), len1)
+                
                 ## compute breakpoints stats
                 lr1 <- split(arm$lr, idx1)
                 baf1 <- split(arm$baf, idx1)
@@ -92,7 +93,7 @@ jointSegment <- function(cnv, opts) {
     sd.lr <- estimateSd(cnv$tile$lr) * opts$sd.penalty
     sd.baf <- estimateSd(cnv$tile$baf) * opts$sd.penalty
     ## create segmentation
-    cnv$tile <- .addJointSeg(cnv$tile, opts$K, opts$min.seg, sd.lr, sd.baf)
+    cnv$tile <- .addJointSeg(cnv$tile, opts$min.K, opts$max.K, opts$min.seg, sd.lr, sd.baf)
     cnv$seg <- unname(unlist(range(split(cnv$tile, cnv$tile$seg))))
     cnv$snp$seg <- findOverlaps(cnv$snp, cnv$seg, select="first", maxgap = opts$shoulder-1)
     return(cnv)

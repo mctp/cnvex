@@ -50,11 +50,19 @@
     return(var.gr)
 }
 
-importVcf <- function(vcf, opts) {
+importVcf <- function(vcf, tile, opts) {
+    ## import
     if (opts$caller=="vardict") {
         var <- .importVarDict(vcf, opts)
     } else {
         stop("Variant caller not supported.")
     }
+    ## filter
+    if (opts$target=="genome") {
+        snp.filter.fun <- filterGenomeGermlineHets
+    } else {
+        snp.filter.fun <- filterTargetGermlineHets
+    }
+    var <- snp.filter.fun(var, tile, opts)
     return(var)
 }

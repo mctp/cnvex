@@ -30,3 +30,16 @@ merge.list <- function (x, y) {
     abd <- abs(median(x, na.rm=TRUE)-median(y, na.rm=TRUE))
     return(abd)
 }
+
+getOpts <- function(target, opts=list()) {
+    if (file.exists(target)) {
+        conf.fn <- target
+    } else {
+        conf.fn <- system.file(sprintf("extdata/conf/%s.R", target), package="cnvex")
+    }
+    stopifnot(file.exists(conf.fn))
+    ENV = new.env(parent = .BaseNamespaceEnv)
+    source(conf.fn, local=ENV)
+    opts <- merge.list(opts, ENV$OPTS)
+    return(opts)
+}
