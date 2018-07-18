@@ -29,46 +29,37 @@
     return(gr)
 }
 
-CNV <- function(opts, tn.vcf, t.bam, n.bam) {
-
-    if (opts$target=="onco1500-v3") {
-        target.fun <- .getTargetTiles
-        target.fn <- system.file(sprintf("extdata/onco1500-v3-targets-hg38-%s.bed.gz", opts$chr.names), package="cnvex")
-        snp.filter.fun <- filterTargetGermlineHets
-    } else if (opts$target=="agilent-v4") {
-        target.fun <- .getTargetTiles
-        target.fn <- system.file(sprintf("extdata/agilent-v4-targets-hg38-%s.bed.gz", opts$chr.names), package="cnvex")
-        snp.filter.fun <- filterTargetGermlineHets
-    } else if(opts$target=="nextera-v1.2") {
-        target.fun <- .getTargetTiles
-        target.fn <- system.file(sprintf("extdata/nextera-v1.2-targets-hg38-%s.bed.gz", opts$chr.names), package="cnvex")
-        snp.filter.fun <- filterTargetGermlineHets
-    } else if (opts$target=="genome") {
-        target.fun <- .getGenomeTiles
-        target.fn <- NA_character_
-        snp.filter.fun <- filterGenomeGermlineHets
-    } else {
-        stop("Invalid target.")
-    }
-    
-    ## import all data
-    var <- importVcf(tn.vcf, opts)
-    tile <- target.fun(target.fn, opts)
-    tile <- .addCoverage(tile, t.bam, n.bam, opts)
-    
-    ## detect sex
-    if (is.null(opts$sex)) {
-        sex <- .detect.sex(var, tile)
-    } else {
-        sex <- opts$sex
-    }
-    tile <- .addCopy(tile, sex)
-    var <- .addCopy(var, sex)
-
-    ## add BAF
-    snp <- snp.filter.fun(var, tile, opts)
-    tile <- .addBaf(tile, snp, opts)
-    
-    cnv <- list(snp=snp, tile=tile, sex=sex)
-    return(cnv)
+.addBaf <- function(gt, snp, opts) {
+    hits <- findOverlaps(snp, gt, maxgap = opts$shoulder-1)
+    hits <- hits[gt[subjectHits(hits)]$target] # prefer assignment to target
+    hits <- hits[!duplicated(queryHits(hits))] # if snp close to two targets pick one
+    bad=ifelse(snp[queryHits(hits)]$t.AF<0.5,
+               round(   snp[queryHits(hits)]$t.AF  * snp[queryHits(hits)]$t.DP),
+               round((1-snp[queryHits(hits)]$t.AF) * snp[queryHits(hits)]$t.DP))
+    tmp <- data.table(
+        idx=subjectHits(hits),
+        bad=bad,
+        depth=snp[queryHits(hits)]$t.DP
+    )
+    setkey(tmp, idx)
+    tmp <- tmp[J(1:length(gt))]
+    tmp <- tmp[,.(baf=sum(bad)/sum(depth)),by=idx]
+    gt$baf <- tmp$baf
+    gt$baf <- .smooth.outliers.gr(gt, "baf")
+    return(gt)
 }
+
+## ## import all data
+## tile <- target.fun(target.fn, opts)
+## tile <- .addCoverage(tile, t.bam, n.bam, opts)
+## ## detect sex
+## if (is.null(opts$sex)) {
+##     sex <- .detect.sex(var, tile)
+## } else {
+##     sex <- opts$sex
+## }
+## tile <- .addCopy(tile, sex)
+## var <- .addCopy(var, sex)
+## ## add BAF
+## snp <- snp.filter.fun(var, tile, opts)
+## tile <- .addBaf(tile, snp, opts)
