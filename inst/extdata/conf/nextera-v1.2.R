@@ -2,7 +2,7 @@ OPTS <- list(
     cores=4,
     sample=c(1,2),
     target="nextera-v1.2",
-    target.fn=system.file("extdata/nextera-v1.2-targets-hg38-ucsc.bed.gz", package="cnvex"),    
+    target.fn=system.file("inst/extdata/nextera-v1.2-targets-hg38-ucsc.bed.gz", package="cnvex"),   
     segment="joint",
     caller="vardict",
     chr.names="ucsc",
@@ -25,8 +25,10 @@ OPTS <- list(
     res=0.1,
     gc.adjust.trend=TRUE,
     gc.adjust.offset=TRUE,
-    gc.adjust.span.on=0.25,
-    gc.adjust.span.off=0.50,
-    lr.smooth=TRUE,
+    gc.adjust.span.on=0.15,
+    gc.adjust.span.off=0.30,
+    gc.adjust.on=c(0.3, 0.7),
+    gc.adjust.off=c(0.0, 1.0),
+    lr.smooth="outlier",
     lr.smooth.window=13
 )        

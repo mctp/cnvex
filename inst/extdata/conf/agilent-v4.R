@@ -27,6 +27,8 @@ OPTS <- list(
     gc.adjust.offset=FALSE,
     gc.adjust.span.on=0.35,
     gc.adjust.span.off=0.35,
-    lr.smooth=FALSE,
+    gc.adjust.on=c(0.3, 0.7),
+    gc.adjust.off=c(0.0, 1.0),
+    lr.smooth="outlier",
     lr.smooth.window=13
 )

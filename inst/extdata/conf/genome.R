@@ -23,10 +23,12 @@ OPTS <- list(
     max.sC=20,
     max.len.per.probe=1e6,
     res=0.1,
-    gc.adjust.trend=FALSE,
-    gc.adjust.offset=FALSE,
-    gc.adjust.span.on=0.25,
-    gc.adjust.span.off=0.35,
-    lr.smooth=FALSE,
+    gc.adjust.trend=TRUE,
+    gc.adjust.offset=TRUE,
+    gc.adjust.span.on=0.5,
+    gc.adjust.span.off=NA_real_,
+    gc.adjust.on=c(0.3, 0.7),
+    gc.adjust.off=c(NA_real_, NA_real_),
+    lr.smooth="outlier",
     lr.smooth.window=21
 )
