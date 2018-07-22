@@ -7,7 +7,6 @@ filterGenomeGermlineHets <- function(var, tile, opts) {
         var$TYPE=="SNV" &
         ## heterozygous
         var$n.GT %in% c("0/1", "1/0") &
-        var$t.GT %in% c("0/1", "1/0") &
         ## right range
         var$n.AF > 0.25 & var$n.AF < 0.75 &
         ## high-quality
@@ -25,7 +24,6 @@ filterTargetGermlineHets <- function(var, tile, opts) {
         var$TYPE=="SNV" &
         ## heterozygous
         var$n.GT %in% c("0/1", "1/0") &
-        var$t.GT %in% c("0/1", "1/0") &
         ## right range
         var$n.AF > 0.25 & var$n.AF < 0.75 &
         ## high 

@@ -1,20 +1,3 @@
-.smooth.outliers <- function(data, chr, pos) {
-    print(pos)
-    obj <- CNA(data, as.integer(factor(chr)), pos,
-              data.type = "logratio",
-              sampleid = "sample")
-    adj <- smooth.CNA(obj)$sample
-    return(adj)
-}
-
-.smooth.outliers.gr <- function(gr, data.col) {
-    obj <- CNA(mcols(gr)[[data.col]], as.integer(seqnames(gr)), floor((start(gr)+end(gr))/2),
-              data.type = "logratio",
-              sampleid = "sample")
-    adj <- smooth.CNA(obj)$sample
-    return(adj)
-}
-
 .len.penalty <- function(x) {
     1/x
 }
@@ -90,11 +73,11 @@
 
 jointSegment <- function(cnv, opts) {
     ## estimated standard-deviation
-    sd.lr <- estimateSd(cnv$tile$lr) * opts$sd.penalty
+    sd.lr <- estimateSd(cnv$tile$lr.smooth) * opts$sd.penalty
     sd.baf <- estimateSd(cnv$tile$baf) * opts$sd.penalty
     ## create segmentation
     cnv$tile <- .addJointSeg(cnv$tile, opts$min.K, opts$max.K, opts$min.seg, sd.lr, sd.baf)
     cnv$seg <- unname(unlist(range(split(cnv$tile, cnv$tile$seg))))
-    cnv$snp$seg <- findOverlaps(cnv$snp, cnv$seg, select="first", maxgap = opts$shoulder-1)
+    cnv$var$seg <- findOverlaps(cnv$var, cnv$seg, select="first", maxgap = opts$shoulder-1)
     return(cnv)
 }

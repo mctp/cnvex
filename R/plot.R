@@ -19,44 +19,73 @@ plotGC <- function(cnv) {
 }
 
 plotCNV <- function(cnv, sel.lr="lr", sel.chr=NULL) {
-    ## input
-    gr <- unlist(cnv$tile)
-    if (!is.null(sel.chr)) {
-        gr <- gr[seqnames(gr) %in% sel.chr]
+    if (is.null(sel.chr)) {
+        sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
-    ## data
-    tbl <- data.table(
-        chr=as.character(seqnames(gr)),
-        pos=unlist(unname(lapply(lengths(split(gr, seqnames(gr))), seq_len))),#floor((start(gr)+end(gr))/2),
-        lr=ifelse(is.finite(mcols(gr)[[sel.lr]]), mcols(gr)[[sel.lr]], NA_real_),
-        baf=mcols(gr)[["baf"]],
-        tgt=mcols(gr)[["target"]]
-    )
-    tbl[,chr:=factor(chr, paste("chr", c(1:22, "X", "Y", "M"), sep=""), ordered=TRUE)]
-    tbl <- tbl[order(-tgt)]
     
-    plt.lr <- ggplot(tbl) + facet_grid(.~chr, scales="free_x") +
-        aes(x=pos, y=lr, color=tgt) +
-        scale_color_manual(values=c("red", "black")) +
-        geom_point(size=0.5, alpha=0.5) +
-        coord_cartesian(ylim=c(min(-3, min(tbl$lr, na.rm=TRUE)),
-                               max (3, max(tbl$lr, na.rm=TRUE)))) +
+    snp <- cnv$var[cnv$var$germline]
+    snp <- snp[seqnames(snp) %in% sel.chr]
+    cov <- cnv$tile
+    cov <- cov[seqnames(cov) %in% sel.chr]
+
+    snp.dt <- data.table(
+        chr=as.character(seqnames(snp)),
+        pos=start(snp),
+        val=snp$t.AF,
+        type="BAF"
+    )[!is.na(val)]
+    snp.dt[,chr:=factor(chr, sel.chr, ordered=TRUE)]
+    
+    cov.dt <- data.table(
+        chr=as.character(seqnames(cov)),
+        pos=floor((start(cov)+end(cov))/2),
+        val=mcols(cov)[[sel.lr]],
+        type="COV",
+        tgt=mcols(cov)[["target"]]
+    )[!is.na(val)]
+    cov.dt[,chr:=factor(chr, sel.chr, ordered=TRUE)]
+    cov.dt <- cov.dt[-c(1,nrow(cov.dt))][order(-tgt)]
+    ## fix
+    snp.dt <- rbind(snp.dt, cov.dt[,.SD[1],by=chr][,.(chr, pos, val=0.5, type="BAF")])
+    cov.dt <- rbind(cov.dt, snp.dt[,.SD[1],by=chr][,.(chr, pos, val=0.0, type="COV", tgt=TRUE)])
+
+    ## COV
+    if (length(unique(cov.dt$tgt))==2) {
+        cols <- c("red", "black")
+    } else {
+        cols <- "black"
+    }
+    cov.plt <- ggplot(cov.dt) + facet_grid(.~chr, scales="free_x") +
+        aes(x=pos, y=val, color=tgt) +
+        scale_color_manual(values=cols, guide=FALSE) +
+        geom_point(size=0.5, alpha=0.5, shape=16) +
+        coord_cartesian(ylim=c(min(-3, min(cov.dt$val, na.rm=TRUE)),
+                               max (3, max(cov.dt$val, na.rm=TRUE)))) +
         coord_cartesian(ylim=c(-3,3)) +
         geom_hline(yintercept = 0, color="blue") +
         theme_pubr() +
+        ylab("log2(tumor/normal)") +
         theme(
             panel.spacing = unit(0, "lines"),
             axis.title.x=element_blank(),
             axis.ticks.x = element_blank(),
             axis.text.x = element_blank()
-            
         )
     
-    plt.baf <- ggplot(tbl) + facet_grid(.~chr, scales="free_x") +
-        aes(x=pos, y=baf) +
-        geom_point(size=0.5, alpha=0.5) +
-        coord_cartesian(ylim=c(0,0.5)) + 
+    ## SNP
+    if (nrow(snp.dt)>1e5) {
+        p.size=0.2
+        p.alpha=0.2
+    } else {
+        p.size=0.5
+        p.alpha=0.5
+    }
+    snp.plt <- ggplot(snp.dt) + facet_grid(.~chr, scales="free_x") +
+        aes(x=pos, y=val) +
+        geom_point(size=p.size, alpha=p.alpha, shape=16) +
+        coord_cartesian(ylim=c(0,1)) + 
         theme_pubr() +
+        ylab("BAF") +
         theme(
             panel.spacing = unit(0, "lines"),
             axis.title.x = element_blank(),
@@ -64,8 +93,7 @@ plotCNV <- function(cnv, sel.lr="lr", sel.chr=NULL) {
             axis.text.x = element_blank()
         )
     
-    
-    plt <- grid.arrange(plt.lr, plt.baf, ncol=1)
+    plt <- rbind(ggplotGrob(cov.plt), ggplotGrob(snp.plt), size = "last")
     return(plt)
 }
 
