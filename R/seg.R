@@ -4,11 +4,11 @@
 
 .jointSegArm <- function(arm, min.K, max.K, min.seg, sd.lr, sd.baf, only.target=TRUE) {
     ## make sure we have enough points to segment
-    opt.K <- ceiling(length(arm$lr)/100)
+    opt.K <- ceiling(length(arm$lr.smooth)/100)
     K <- min(max.K, max(min.K, opt.K))
     if (K>1) {
         ## initial segmentation
-        arm.lr <- arm$lr
+        arm.lr <- arm$lr.smooth
         arm.baf <- arm$baf
         if (only.target) {
             arm.lr[!arm$target] <- NA_real_
@@ -30,7 +30,7 @@
                 idx1 <- rep(seq_along(bpt1), len1)
                 
                 ## compute breakpoints stats
-                lr1 <- split(arm$lr, idx1)
+                lr1 <- split(arm$lr.smooth, idx1)
                 baf1 <- split(arm$baf, idx1)
                 stat1 <- data.table(
                     seg1=seg1,
@@ -78,6 +78,19 @@ jointSegment <- function(cnv, opts) {
     ## create segmentation
     cnv$tile <- .addJointSeg(cnv$tile, opts$min.K, opts$max.K, opts$min.seg, sd.lr, sd.baf)
     cnv$seg <- unname(unlist(range(split(cnv$tile, cnv$tile$seg))))
+    return(cnv)
+}
+
+getSeg <- function(cnv, opts) {
+    ## seg -> var
     cnv$var$seg <- findOverlaps(cnv$var, cnv$seg, select="first", maxgap = opts$shoulder-1)
+    ## seg -> gene
+    hit.prom <- as.data.table(findOverlaps(promoters(cnv$gene, 0, 1), cnv$seg))
+    hit.gene <- as.data.table(findOverlaps(cnv$gene, cnv$seg))
+    hit.gene <- hit.gene[!(queryHits %in% hit.prom$queryHits)]
+    hit.gene <- hit.gene[,.SD[1],by=queryHits]
+    hit <- rbind(hit.prom, hit.gene)
+    cnv$gene$seg <- NA_real_
+    cnv$gene$seg[hit$queryHits] <- hit$subjectHits
     return(cnv)
 }

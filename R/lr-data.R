@@ -5,7 +5,7 @@ lrData <- function(cnv, opts) {
     local.sd <- opts$local.sd
     tmp <- data.table(
         seg=tile$seg,
-        lr=tile$lr,
+        lr=tile$lr.smooth,
         nC=tile$nC
     )
     ##
@@ -19,5 +19,5 @@ lrData <- function(cnv, opts) {
     } else {
         tmp[,sd := global.sd]
     }
-    return(tmp)
+    return(tmp[])
 }

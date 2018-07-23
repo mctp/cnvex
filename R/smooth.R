@@ -9,6 +9,7 @@
 .smoothOutliers <- function(tile, opts) {
     ## remove gross outliers
     lr.smooth <- tile$lr.gc
+    lr.smooth[!is.finite(lr.smooth)] <- NA_real_
     if (any(tile$target)) {
         lr.smooth[ tile$target] <- .smooth.outliers.gr(tile[ tile$target], "lr.gc")
     }

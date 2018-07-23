@@ -18,7 +18,7 @@ plotGC <- function(cnv) {
     return(plt)
 }
 
-plotCNV <- function(cnv, sel.lr="lr", sel.chr=NULL) {
+plotCNV <- function(cnv, sel.lr="lr.smooth", sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
@@ -97,42 +97,118 @@ plotCNV <- function(cnv, sel.lr="lr", sel.chr=NULL) {
     return(plt)
 }
 
-plotSeg <- function(cnv, sel.chr=NULL, sel.lr="lr") {
-    gr <- unlist(cnv$tile)
-    l2r <- ifelse(is.finite(mcols(gr)[[sel.lr]]), mcols(gr)[[sel.lr]], NA_real_)
-    baf <- mcols(gr)[["baf"]]
-    tmp <- data.table(
-        chr=as.character(seqnames(gr)),
-        pos=floor((start(gr)+end(gr))/2),
-        l2r=l2r,
-        baf=baf,
-        seg=mcols(gr)[["seg"]],
-        tgt=mcols(gr)[["target"]]
-    )
-    print(tmp)
-    if (!is.null(sel.chr)) {
-        tmp <- tmp[chr %in% sel.chr]
+plotSeg <- function(cnv, sel.lr="lr.smooth", sel.chr=NULL) {
+    if (is.null(sel.chr)) {
+        sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
-    plt.l2r <- ggplot(tmp) + facet_grid(chr~.) +
-        aes(x=pos, y=l2r, color=factor(ifelse(!tgt,4,as.integer(seg%%3)))) +
-        geom_point(size=0.5) +
-        coord_cartesian(ylim=c(min(-3, min(tmp$l2r, na.rm=TRUE)),
-                               max (3, max(tmp$l2r, na.rm=TRUE)))) +
+    
+    snp <- cnv$var[cnv$var$germline]
+    snp <- snp[seqnames(snp) %in% sel.chr]
+    cov <- cnv$tile
+    cov <- cov[seqnames(cov) %in% sel.chr]
+
+    snp.dt <- data.table(
+        chr=as.character(seqnames(snp)),
+        pos=start(snp),
+        val=snp$t.AF,
+        seg=snp$seg,
+        type="BAF"
+    )[!is.na(val)]
+    snp.dt[,chr:=factor(chr, sel.chr, ordered=TRUE)]
+    
+    cov.dt <- data.table(
+        chr=as.character(seqnames(cov)),
+        pos=floor((start(cov)+end(cov))/2),
+        val=mcols(cov)[[sel.lr]],
+        type="COV",
+        seg=cov$seg,
+        tgt=mcols(cov)[["target"]]
+    )[!is.na(val)]
+    cov.dt[,chr:=factor(chr, sel.chr, ordered=TRUE)]
+    cov.dt <- cov.dt[-c(1,nrow(cov.dt))][order(-tgt)]
+    ## fix
+    snp.dt <- rbind(snp.dt, cov.dt[,.SD[1],by=chr][,.(chr, pos, val=0.5, seg=0, type="BAF")])
+    cov.dt <- rbind(cov.dt, snp.dt[,.SD[1],by=chr][,.(chr, pos, val=0.0, seg=0, type="COV", tgt=TRUE)])
+
+    ## COV
+    cov.plt <- ggplot(cov.dt) + facet_grid(.~chr, scales="free_x") +
+        aes(x=pos, y=val, color=factor(ifelse(!tgt,4,as.integer(seg%%3)))) +
+        scale_color_npg(guide=FALSE) +        
+        geom_point(size=0.75, alpha=0.5, shape=16) +
+        coord_cartesian(ylim=c(min(-3, min(cov.dt$val, na.rm=TRUE)),
+                               max (3, max(cov.dt$val, na.rm=TRUE)))) +
+        coord_cartesian(ylim=c(-3,3)) +
+        geom_hline(yintercept = 0, color="blue") +
+        theme_pubr() +
+        ylab("log2(tumor/normal)") +
+        theme(
+            panel.spacing = unit(0, "lines"),
+            axis.title.x=element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank()
+        )
+    
+    ## SNP
+    if (nrow(snp.dt)>1e5) {
+        p.size=0.2
+        p.alpha=0.5
+    } else {
+        p.size=0.5
+        p.alpha=0.75
+    }
+    snp.plt <- ggplot(snp.dt) + facet_grid(.~chr, scales="free_x") +
+        aes(x=pos, y=val, color=factor(as.integer(seg%%3))) +
+        geom_point(size=p.size, alpha=p.alpha, shape=16) +
+        coord_cartesian(ylim=c(0,1)) +
         scale_color_npg(guide=FALSE) +
-        theme_pubr()
+        theme_pubr() +
+        ylab("BAF") +
+        theme(
+            panel.spacing = unit(0, "lines"),
+            axis.title.x = element_blank(),
+            axis.ticks.x = element_blank(),
+            axis.text.x = element_blank()
+        )
     
-    plt.baf <- ggplot(tmp) + facet_grid(chr~.) +
-        aes(x=pos, y=baf,
-            color=factor(as.integer(seg%%3))
-            ) +
-        geom_point(size=0.5) +
-        coord_cartesian(ylim=c(0,0.5))+ 
-       scale_color_npg(guide=FALSE) +
-        theme_pubr()
-    
-    plt <- grid.arrange(plt.l2r, plt.baf, ncol=1)
+    plt <- rbind(ggplotGrob(cov.plt), ggplotGrob(snp.plt), size = "last")
     return(plt)
 }
+
+## plotSeg <- function(cnv, sel.chr=NULL, sel.lr="lr") {
+##     gr <- unlist(cnv$tile)
+##     l2r <- ifelse(is.finite(mcols(gr)[[sel.lr]]), mcols(gr)[[sel.lr]], NA_real_)
+##     baf <- mcols(gr)[["baf"]]
+##     tmp <- data.table(
+##         chr=as.character(seqnames(gr)),
+##         pos=floor((start(gr)+end(gr))/2),
+##         l2r=l2r,
+##         baf=baf,
+##         seg=mcols(gr)[["seg"]],
+##         tgt=mcols(gr)[["target"]]
+##     )
+##     print(tmp)
+##     if (!is.null(sel.chr)) {
+##         tmp <- tmp[chr %in% sel.chr]
+##     }
+##     plt.l2r <- ggplot(tmp) + facet_grid(chr~.) +
+##         aes(x=pos, y=l2r, color=) +
+##         geom_point(size=0.5) +
+##         coord_cartesian(ylim=c(min(-3, min(tmp$l2r, na.rm=TRUE)),
+##                                max (3, max(tmp$l2r, na.rm=TRUE)))) +
+##         
+##         theme_pubr()
+    
+##     plt.baf <- ggplot(tmp) + facet_grid(chr~.) +
+##         aes(x=pos, y=baf,
+##             color=
+##             ) +
+##         geom_point(size=0.5) +
+##         coord_cartesian(ylim=c(0,0.5))+ 
+##         theme_pubr()
+    
+##     plt <- grid.arrange(plt.l2r, plt.baf, ncol=1)
+##     return(plt)
+## }
 
 plotGrid <- function(grid, cand) {
     midp <- min(cand$L1)

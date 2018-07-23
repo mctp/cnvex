@@ -3,6 +3,7 @@ OPTS <- list(
     sample=c(1,2),
     target="genome",
     target.fn=NA_character_,
+    gene.fn=system.file("inst/extdata/gene/motr.v2-prot.gff3", package="cnvex"),   
     segment="joint",
     caller="vardict",
     chr.names="ucsc",

@@ -3,6 +3,7 @@ OPTS <- list(
     sample=c(1,2),
     target="agilent-v4",
     target.fn=system.file("extdata/agilent-v4-targets-hg38-ucsc.bed.gz", package="cnvex"),
+    gene.fn=system.file("inst/extdata/gene/motr.v2-prot.gff3", package="cnvex"),   
     segment="joint",
     caller="vardict",
     chr.names="ucsc",
