@@ -4,7 +4,8 @@
 
 .jointSegArm <- function(arm, min.K, max.K, min.seg, sd.lr, sd.baf, only.target=TRUE) {
     ## make sure we have enough points to segment
-    opt.K <- ceiling(length(arm$lr.smooth)/100)
+    tmp <- min(sum(!is.na(arm$lr.smooth)), sum(!is.na(arm$baf)))
+    opt.K <- ceiling(tmp/100)
     K <- min(max.K, max(min.K, opt.K))
     if (K>1) {
         ## initial segmentation

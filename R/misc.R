@@ -43,3 +43,12 @@ getOpts <- function(target, opts=list()) {
     opts <- merge.list(opts, ENV$OPTS)
     return(opts)
 }
+
+.dtRound <- function(dt) {
+    for (i in names(dt)) {
+        if (class(dt[,get(i)])=="numeric") {
+            dt[,":="((i), round(get(i), 6))]
+        }
+    }
+    return(dt)
+}

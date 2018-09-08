@@ -18,8 +18,10 @@
 
 .detect.offset <- function(cnv, opts) {
     tmp <- as.data.table(mcols(cnv$tile)[,c("seg", "lr.smooth", "baf")])
-    tmp <- tmp[,.(.N, lr=mean(lr.smooth, na.rm=TRUE), baf=mean(baf, na.rm=TRUE)),by=seg]
+    tmp <- tmp[,.(.N, lr=mean(lr.smooth, na.rm=TRUE), baf=mean(baf, na.rm=TRUE)), by=seg]
     tmp <- tmp[is.finite(lr) & is.finite(baf)]
-    offset <- tmp[order(-baf)][baf>0.44, median(lr)]
+    tmp <- tmp[order(abs(lr))][1:(nrow(tmp)%/%2)]
+    tmp <- tmp[order(   -baf)][1:(nrow(tmp)%/%2)]
+    offset <- median(tmp$lr)
     return(offset)
 }

@@ -15,15 +15,6 @@ adjustCNVEX <- function(opts, cnv) {
     return(cnv)
 }
 
-.geneLogRatio <- function(cnv, opts) {
-    off <- .detect.offset(cnv)
-    tmp <- as.data.table(mcols(cnv$tile)[,c("seg", "lr.smooth", "baf")])
-    tmp <- tmp[,.(.N, lr=mean(lr.smooth-off, na.rm=TRUE), mzd=mean(baf, na.rm=TRUE)),by=seg]
-    tmp <- tmp[cnv$gene$seg, .(N, lr, mzd)]
-    tmp <- cbind(as.data.table(cnv$gene)[,.(gene_name, gene_id, seg)], tmp)
-    return(tmp)
-}
-
 #' @export
 basic <- function() {
 
@@ -98,9 +89,7 @@ tocsv <- function() {
     opts <- getOpts(args$config, opts=list(cores=args$cores))
     cnv <- readRDS(args$inp)
     if (args$type == "genelr") {
-        cnv <- getGene(cnv, opts) ## this will be part of basic
-        cnv <- getSeg(cnv, opts) ## this will be part of segment
-        csv <- .geneLogRatio(cnv, opts)
+        csv <- .dtRound(.geneLogRatio(cnv, opts))
     } else {
         optparse::print_help(parser)
         write("Output type not supported.\n", stderr())
@@ -184,7 +173,7 @@ segment <- function() {
     cnv <- readRDS(args$inp)
     cnv <- getBaf(cnv, opts)
     cnv <- jointSegment(cnv, opts)
-    ## cnv <- getSeg(cnv, opts)
+    cnv <- getSeg(cnv, opts)
     if (is.null(args$out)) {
         args$out <- str_replace(args$inp, ".rds$", "-seg.rds")
     }
@@ -216,7 +205,7 @@ plot <- function() {
                               help="Input CNVEX file"),
         optparse::make_option(c("-r", "--chr"), type="character",
                               default=NULL,
-                              help="select"),
+                              help="chromosome"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default=NULL,
                               help="Output file name")
