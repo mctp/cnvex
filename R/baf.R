@@ -1,12 +1,12 @@
 .getTargetHits <- function(gt, snp, opts) {
-    hits <- findOverlaps(snp, gt, maxgap = opts$shoulder-1)
+    hits <- findOverlaps(snp, gt, maxgap = opts$tile.shoulder-1)
     hits <- hits[gt[subjectHits(hits)]$target] # prefer assignment to target
     hits <- hits[!duplicated(queryHits(hits))] # if snp close to two targets pick one
     return(hits)
 }
 
 .getGenomeHits <- function(gt, snp, opts) {
-    hits <- findOverlaps(snp, gt, maxgap = opts$shoulder-1)
+    hits <- findOverlaps(snp, gt, maxgap = opts$tile.shoulder-1)
     return(hits)
 }
 

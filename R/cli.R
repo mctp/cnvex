@@ -101,7 +101,6 @@ tocsv <- function() {
     fwrite(csv, args$out)
 }
 
-
 #' @export
 adjust <- function() {
 
@@ -179,7 +178,6 @@ segment <- function() {
     }
     saveRDS(cnv, args$out)
 }
-
 
 #' @export
 plot <- function() {

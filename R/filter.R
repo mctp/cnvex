@@ -15,7 +15,7 @@ filterGenomeGermlineHets <- function(var, tile, opts) {
 }
 
 filterTargetGermlineHets <- function(var, tile, opts) {
-    splash <- tile[tile$target] + opts$shoulder
+    splash <- tile[tile$target] + opts$tile.shoulder
     var$germline <- 
         var %over% splash &
         ## germline

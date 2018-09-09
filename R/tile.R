@@ -52,7 +52,7 @@
 .getGenomeTiles <- function(tgt.fn, opts) {
     ## tile genome
     seqi <- keepStandardChromosomes(Seqinfo(genome="hg38"))
-    genome.tile <- tileGenome(dropSeqlevels(seqi, opts$skip.chr), tilewidth=opts$tilewidth, cut.last.tile.in.chrom=TRUE)
+    genome.tile <- tileGenome(dropSeqlevels(seqi, opts$skip.chr), tilewidth=opts$tile.width, cut.last.tile.in.chrom=TRUE)
     genome.tile$target <- TRUE
     genome.tile <- .annotateTiles(genome.tile, seqi, opts$skip.chr)
     return(genome.tile)
@@ -67,8 +67,8 @@
     tgt$target <- TRUE
     gap <- dropSeqlevels(gaps(tgt), opts$skip.chr, pruning.mode="coarse")
     gap <- gap[strand(gap)=="*"]
-    gap <- gap[width(gap)>2*opts$shoulder+opts$min.gap]
-    gap <- gap-opts$shoulder
+    gap <- gap[width(gap)>2*opts$tile.shoulder+opts$tile.min.gap]
+    gap <- gap-opts$tile.shoulder
     gap$target <- FALSE
     target.tile <- sort(c(tgt, gap))
     target.tile <- .annotateTiles(target.tile, seqi, opts$skip.chr)

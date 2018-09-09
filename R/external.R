@@ -30,3 +30,19 @@
     unlink(bed)
     return(out)
 }
+
+.runCBS <- function(y, ...) {
+    n <- length(y)
+    chrom <- rep(1, n)
+    maploc <- 1:n
+    genomdat <- y
+    cna <- DNAcopy::CNA(genomdat, chrom, maploc)
+    capture.output(
+        res <- DNAcopy::segment(cna, ...)
+    )
+    bkp <- res$output$loc.end[-length(res$output$loc.end)]
+    if (length(bkp)==0) {
+        bkp <- integer()
+    }
+    return(bkp)
+}
