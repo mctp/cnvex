@@ -155,8 +155,10 @@ segment <- function() {
                               help="Input CNVEX file"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default=NULL,
-                              help="Output CNVEX file")
-        
+                              help="Output CNVEX file"),
+        optparse::make_option(c("-s", "--suffix"), type="character",
+                              default=NULL,
+                              help="Optional file name suffix")
     )
     parser = optparse::OptionParser(
       "Rscript -e 'cnvex::segment()' [options]",
@@ -174,7 +176,11 @@ segment <- function() {
     cnv <- jointSegment(cnv, opts)
     cnv <- getSeg(cnv, opts)
     if (is.null(args$out)) {
-        args$out <- str_replace(args$inp, ".rds$", "-seg.rds")
+        if (!is.null(args$suffix)) {
+            args$out <- str_replace(args$inp, ".rds$", sprintf("-seg-%s.rds", args$suffix))
+        } else {
+            args$out <- str_replace(args$inp, ".rds$", "-seg.rds")
+        }
     }
     saveRDS(cnv, args$out)
 }
