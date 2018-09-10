@@ -1,21 +1,42 @@
 OPTS <- list(
+    #### basic
     cores=4,
     sample=c(1,2),
     target="genome",
     target.fn=NA_character_,
     gene.fn=system.file("extdata/gene/motr.v2-prot.gff3", package="cnvex"),
-    segment="joint",
     caller="vardict",
     chr.names="ucsc",
     skip.chr="chrM",
-    min.gap=NA_integer_,
-    shoulder=0,
-    tilewidth=10000,
-    tileflank=5,
-    min.seg=20,
-    max.K=60,
-    sd.penalty=1,
-    local.sd=FALSE,
+
+    ## tiling
+    tile.width=10000,
+    tile.min.gap=NA_integer_,
+    tile.shoulder=0,
+
+    ## log-ratio
+    lr.smooth="outlier",
+    lr.smooth.window=21,
+    lr.loc.tileflank=5,
+
+    #### segmentation
+    seg.strategy="joint",
+    seg.method="CBS",
+    seg.sd.prune=TRUE,
+    seg.sd.lr.penalty=1,
+    seg.sd.baf.penalty=1,
+    seg.local.sd=FALSE,
+    seg.min.tile=5,
+
+    #### GC-content
+    gc.adjust.trend=TRUE,
+    gc.adjust.offset=TRUE,
+    gc.adjust.span.on=0.5,
+    gc.adjust.span.off=NA_real_,
+    gc.adjust.on=c(0.3, 0.7),
+    gc.adjust.off=c(NA_real_, NA_real_),
+
+    #### optimization
     grid.n=64,
     p.lo=0.05,
     p.hi=0.95,
@@ -24,13 +45,5 @@ OPTS <- list(
     max.C=9,
     max.sC=20,
     max.len.per.probe=1e6,
-    res=0.1,
-    gc.adjust.trend=TRUE,
-    gc.adjust.offset=TRUE,
-    gc.adjust.span.on=0.5,
-    gc.adjust.span.off=NA_real_,
-    gc.adjust.on=c(0.3, 0.7),
-    gc.adjust.off=c(NA_real_, NA_real_),
-    lr.smooth="outlier",
-    lr.smooth.window=21
+    res=0.1
 )
