@@ -22,8 +22,8 @@ plotCNV <- function(cnv, sel.lr="lr.smooth", sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
-    
-    snp <- cnv$var[cnv$var$germline]
+    germline <- filterGermlineHets(cnv$tile, cnv$var, opts)
+    snp <- cnv$var[germline]
     snp <- snp[seqnames(snp) %in% sel.chr]
     cov <- cnv$tile
     cov <- cov[seqnames(cov) %in% sel.chr]
@@ -97,12 +97,12 @@ plotCNV <- function(cnv, sel.lr="lr.smooth", sel.chr=NULL) {
     return(plt)
 }
 
-plotSeg <- function(cnv, sel.lr="lr.smooth", sel.chr=NULL) {
+plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
-    
-    snp <- cnv$var[cnv$var$germline]
+    germline <- filterGermlineHets(cnv$tile, cnv$var, opts)
+    snp <- cnv$var[germline]
     snp <- snp[seqnames(snp) %in% sel.chr]
     cov <- cnv$tile
     cov <- cov[seqnames(cov) %in% sel.chr]
