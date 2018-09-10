@@ -11,30 +11,31 @@
 }
 
 .filterGenomeGermlineHets <- function(gt, var, opts) {
-    min.qual <- quantile(var$QUAL, 0.25, na.rm=TRUE)
+    min.qual <- quantile(var$QUAL, opts$baf.qual.min, na.rm=TRUE)
     t.hi.dp <- quantile(var$t.DP, 0.95)
     t.lo.dp <- quantile(var$t.DP, 0.05)
     n.hi.dp <- quantile(var$n.DP, 0.95)
     n.lo.dp <- quantile(var$n.DP, 0.05)
-    var$germline <- 
+    germline <- 
         ## germline
         !var$SOMATIC &
         ## simple variant
         var$TYPE=="SNV" &
         ## heterozygous
         var$n.GT %in% c("0/1", "1/0") &
-        ## right range
-        var$n.AF > 0.25 & var$n.AF < 0.75 &
+        var$n.AF > opts$baf.het.range[1] & var$n.AF < opts$baf.het.range[2] &
+        ## sufficient coverage
+        var$t.DP > opts$baf.min.t.dp &
         ## high-quality
         var$t.DP > t.lo.dp & var$t.DP < t.hi.dp &
         var$n.DP > n.lo.dp & var$n.DP < n.hi.dp &
-        (!var$mask.strict | var$QUAL > min.qual)
-    return(var)
+        (!var$mask.loose & (!var$mask.strict | var$QUAL > min.qual))
+    return(germline)
 }
 
 .filterTargetGermlineHets <- function(gt, var, opts) {
-    splash <- gt[gte$target] + opts$shoulder
-    var$germline <- 
+    splash <- gt[gt$target] + opts$shoulder
+    germline <-
         var %over% splash &
         ## germline
         !var$SOMATIC &
@@ -43,29 +44,19 @@
         ## heterozygous
         var$n.GT %in% c("0/1", "1/0") &
         ## right range
-        var$n.AF > 0.25 & var$n.AF < 0.75 &
+        var$n.AF > opts$baf.het.range[1] & var$n.AF < opts$baf.het.range[2] &
         ## high 
         var$n.DP > 16 &
         var$t.DP > 16 &
         ## mappability
         (!var$mask.strict)
-    return(var)
-}
-
-.filterSnp <- function(tile, var, opts) {
-    if (opts$target=="genome") {
-        snp.filter.fun <- .filterGenomeGermlineHets
-    } else {
-        snp.filter.fun <- .filterTargetGermlineHets
-    }
-    var <- snp.filter.fun(gt, var, opts)
-    snp <- var[var$germline]
-    return(snp)
+    return(germline)
 }
 
 .getBaf <- function(gt, var, opts) {
     ## filter variants to SNPs
-    snp <- .filterSnp(gt, var, opts)
+    germline <- filterGermlineHets(gt, var, opts)
+    snp <- var[germline]
     if (opts$target=="genome") {
         hits <- .getGenomeHits(gt, snp, opts)
     } else {
@@ -85,6 +76,16 @@
     gt$baf <- tmp$baf
     gt$baf <- .smooth.outliers.gr(gt, "baf")
     return(gt)
+}
+
+filterGermlineHets <- function(tile, var, opts) {
+    if (opts$target=="genome") {
+        snp.filter.fun <- .filterGenomeGermlineHets
+    } else {
+        snp.filter.fun <- .filterTargetGermlineHets
+    }
+    germline <- snp.filter.fun(gt, var, opts)
+    return(germline)
 }
 
 getBaf <- function(cnv, opts) {
