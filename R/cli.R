@@ -55,53 +55,6 @@ basic <- function() {
 }
 
 #' @export
-tocsv <- function() {
-    
-    option_list = list(
-        
-        optparse::make_option(c("-c", "--config"), type="character",
-                            default="genome",
-                            help="Preset file"),
-        optparse::make_option(c("-p", "--cores"), type="integer",
-                            default=4L,
-                            help="Number of cores"),
-        optparse::make_option(c("-t", "--type"), type="character",
-                              default="genelr",
-                              help="Output type"),
-        optparse::make_option(c("-i", "--inp"), type="character",
-                              default=NULL,
-                              help="Input CNVEX file"),
-        optparse::make_option(c("-o", "--out"), type="character",
-                              default=NULL,
-                              help="Output CSV file")
-        
-    )
-    parser = optparse::OptionParser(
-      "Rscript -e 'cnvex::tocsv()' [options]",
-      description=c("Export CNVEX object as a CSV file.\n"),
-      epilogue=c(
-          "Written by Marcin Cieslik (mcieslik@med.umich.edu)",
-          "Michigan Center for Translational Pathology (c) 2018\n"),
-      option_list=option_list
-      )
-
-    args <- optparse::parse_args(parser, positional_arguments=FALSE)
-    opts <- getOpts(args$config, opts=list(cores=args$cores))
-    cnv <- readRDS(args$inp)
-    if (args$type == "genelr") {
-        csv <- .dtRound(.geneLogRatio(cnv, opts))
-    } else {
-        optparse::print_help(parser)
-        write("Output type not supported.\n", stderr())
-        quit("no", 1)
-    }
-    if (is.null(args$out)) {
-        args$out <- str_replace(args$inp, ".rds$", sprintf("-%s.csv", args$type))
-    }
-    fwrite(csv, args$out)
-}
-
-#' @export
 adjust <- function() {
 
     option_list = list(
@@ -117,8 +70,10 @@ adjust <- function() {
                               help="Input CNVEX file"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default=NULL,
-                              help="Output CNVEX file")
-        
+                              help="Output CNVEX file"),
+        optparse::make_option(c("-s", "--suffix"), type="character",
+                              default=NULL,
+                              help="Optional file name suffix")
     )
     parser = optparse::OptionParser(
       "Rscript -e 'cnvex::adjust()' [options]",
@@ -134,7 +89,11 @@ adjust <- function() {
     cnv <- readRDS(args$inp)
     cnv <- adjustCNVEX(opts, cnv)
     if (is.null(args$out)) {
-        args$out <- str_replace(args$inp, ".rds$", "-adj.rds")
+        if (!is.null(args$suffix)) {
+            args$out <- str_replace(args$inp, ".rds$", sprintf("-adj-%s.rds", args$suffix))
+        } else {
+            args$out <- str_replace(args$inp, ".rds$", "-adj.rds")
+        }
     }
     saveRDS(cnv, args$out)
 }
@@ -183,6 +142,55 @@ segment <- function() {
         }
     }
     saveRDS(cnv, args$out)
+}
+
+#' @export
+tocsv <- function() {
+    
+    option_list = list(
+        
+        optparse::make_option(c("-c", "--config"), type="character",
+                            default="genome",
+                            help="Preset file"),
+        optparse::make_option(c("-p", "--cores"), type="integer",
+                            default=4L,
+                            help="Number of cores"),
+        optparse::make_option(c("-t", "--type"), type="character",
+                              default="genelr",
+                              help="Output type"),
+        optparse::make_option(c("-i", "--inp"), type="character",
+                              default=NULL,
+                              help="Input CNVEX file"),
+        optparse::make_option(c("-o", "--out"), type="character",
+                              default=NULL,
+                              help="Output CSV file"),
+        optparse::make_option(c("-s", "--suffix"), type="character",
+                              default=NULL,
+                              help="Optional file name suffix")
+    )
+    parser = optparse::OptionParser(
+      "Rscript -e 'cnvex::tocsv()' [options]",
+      description=c("Export CNVEX object as a CSV file.\n"),
+      epilogue=c(
+          "Written by Marcin Cieslik (mcieslik@med.umich.edu)",
+          "Michigan Center for Translational Pathology (c) 2018\n"),
+      option_list=option_list
+      )
+
+    args <- optparse::parse_args(parser, positional_arguments=FALSE)
+    opts <- getOpts(args$config, opts=list(cores=args$cores))
+    cnv <- readRDS(args$inp)
+    if (args$type == "genelr") {
+        csv <- .dtRound(.geneLogRatio(cnv, opts))
+    } else {
+        optparse::print_help(parser)
+        write("Output type not supported.\n", stderr())
+        quit("no", 1)
+    }
+    if (is.null(args$out)) {
+        args$out <- str_replace(args$inp, ".rds$", sprintf("-%s.csv", args$type))
+    }
+    fwrite(csv, args$out)
 }
 
 #' @export
@@ -247,7 +255,7 @@ plot <- function() {
         suppressMessages(ggsave(args$out, plt, width=15, height=5))
     }
     if (args$type=="seg") {
-        plt <- plotSeg(cnv, sel.chr = args$chr)
+        plt <- plotSeg(cnv, opts, sel.chr = args$chr)
         if (is.null(args$out)) {
             if (is.null(args$chr)) {
                 args$out <- str_replace(args$inp, ".rds$", "-seg.png")
