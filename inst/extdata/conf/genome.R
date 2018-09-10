@@ -31,9 +31,9 @@ OPTS <- list(
     seg.sd.lr.penalty=1,
     seg.sd.baf.penalty=1,
     seg.local.sd=FALSE,
-    seg.min.tile=5,
-    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=5),
-    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=5),
+    seg.min.tile=3,
+    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=3),
+    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=3),
 
     #### GC-content
     gc.adjust.trend=TRUE,
