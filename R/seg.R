@@ -20,8 +20,8 @@
                 jointSeg(cbind(arm.lr, arm.baf), method=method, K=opt.K)$bestBkp
             )
         } else if (method=="CBS") {
-            seg0.lr <- .runCBS(arm.lr)
-            seg0.baf <- .runCBS(arm.baf)
+            seg0.lr <- .runCBS(arm.lr, opts$seg.cbs.lr)
+            seg0.baf <- .runCBS(arm.baf, opts$seg.cbs.baf)
             seg0 <- unique(sort(c(seg0.lr, seg0.baf)))
         } else {
             stop("Joint segmentation method not supported.")
