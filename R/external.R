@@ -37,8 +37,10 @@
     maploc <- 1:n
     genomdat <- y
     cna <- DNAcopy::CNA(genomdat, chrom, maploc)
+    ## this is crazy
+    inp <- c(list(cna), list(...)[[1]])
     capture.output(
-        res <- DNAcopy::segment(cna, ...)
+        res <- do.call(DNAcopy::segment, inp)
     )
     bkp <- res$output$loc.end[-length(res$output$loc.end)]
     if (length(bkp)==0) {
