@@ -19,6 +19,11 @@ OPTS <- list(
     lr.smooth.window=21,
     lr.loc.tileflank=5,
 
+    #### BAF
+    baf.min.t.dp=12,
+    baf.het.range=c(0.3, 0.7),
+    baf.qual.min=0.25,
+
     #### segmentation
     seg.strategy="joint",
     seg.method="CBS",
@@ -27,6 +32,8 @@ OPTS <- list(
     seg.sd.baf.penalty=1,
     seg.local.sd=FALSE,
     seg.min.tile=5,
+    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=5),
+    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=5),
 
     #### GC-content
     gc.adjust.trend=TRUE,
@@ -46,4 +53,5 @@ OPTS <- list(
     max.sC=20,
     max.len.per.probe=1e6,
     res=0.1
+
 )
