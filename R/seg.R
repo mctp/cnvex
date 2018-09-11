@@ -2,7 +2,7 @@
     1/x
 }
 
-.runJointSeg <- function(arm, method, tile.width, len.min, cbs.lr, cbs.baf, only.target) {
+.runJointSeg <- function(arm, method, tile.width, len.min, cbs.lr, cbs.baf, rbs.selection, only.target) {
     arm.lr <- arm$lr.smooth
     arm.baf <- arm$baf
     if (only.target) {
@@ -17,7 +17,8 @@
             tile.per.mb <- 1e6 / tile.width
             opt.K <- ceiling(n.points / tile.per.mb)
             seg0 <- suppressWarnings(
-                jointSeg(cbind(arm.lr, arm.baf), method=method, K=opt.K)$bestBkp
+                jointSeg(cbind(arm.lr, arm.baf), method=method,
+                         modelSelectionMethod=rbs.selection, K=opt.K)$bestBkp
             )
         } else if (method=="CBS") {
             seg0.lr <- .runCBS(arm.lr, cbs.lr)
@@ -30,7 +31,7 @@
     return(seg0)
 }
 
-.mergeBreakpoints <- function(seg0, arm) {
+.mergeBreakpoints <- function(seg0, sd.lr, sd.baf, arm) {
     best1 <- integer()
     ## got at least one breakpoint
     if (length(seg0) > 0) {
@@ -61,13 +62,13 @@
     return(best1)
 }
 
-.jointSegArm <- function(arm, sd.lr, sd.baf, method, tile.width, len.min, cbs.lr, cbs.baf, sd.prune, len.prune) {
+.jointSegArm <- function(arm, sd.lr, sd.baf, method, tile.width, len.min, cbs.lr, cbs.baf, rbs.selection, sd.prune, len.prune) {
     ## initial segmentation
-    seg1 <- .runJointSeg(arm, method, tile.width, len.min, cbs.lr, cbs.baf, TRUE)
+    seg1 <- .runJointSeg(arm, method, tile.width, len.min, cbs.lr, cbs.baf, rbs.selection, TRUE)
     ## iteratively remove spurious breakpoints
     if (sd.prune) {
         repeat({
-            best1 <- .mergeBreakpoints(seg1, arm)
+            best1 <- .mergeBreakpoints(seg1, sd.lr, sd.baf, arm)
             seg1 <- setdiff(seg1, best1)
             if (length(best1) == 0) {break}
         })
@@ -101,7 +102,7 @@ jointSegment <- function(cnv, opts) {
     ## create segmentation
     cnv$tile <- .addJointSeg(cnv$tile, sd.lr, sd.baf, opts$seg.method,
                              opts$tile.width, opts$seg.len.min, opts$seg.cbs.lr,
-                             opts$seg.cbs.baf, opts$seg.sd.prune, opts$seg.len.prune)
+                             opts$seg.cbs.baf, opts$seg.rbs.selection, opts$seg.sd.prune, opts$seg.len.prune)
     cnv$seg <- unname(unlist(range(split(cnv$tile, cnv$tile$seg))))
     return(cnv)
 }
