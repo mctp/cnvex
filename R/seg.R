@@ -16,10 +16,8 @@
         if (method %in% c("RBS", "DynamicProgramming")) {
             tile.per.mb <- 1e6 / tile.width
             opt.K <- ceiling(n.points / tile.per.mb)
-            seg0 <- suppressWarnings(
-                jointSeg(cbind(arm.lr, arm.baf), method=method,
-                         modelSelectionMethod=rbs.selection, K=opt.K)$bestBkp
-            )
+            seg0 <- suppressWarnings(sort(unique(jointSeg(
+                cbind(arm.lr, arm.baf), method=method, modelSelectionMethod=rbs.selection, K=opt.K)$bestBkp)))
         } else if (method=="CBS") {
             seg0.lr <- .runCBS(arm.lr, cbs.lr)
             seg0.baf <- .runCBS(arm.baf, cbs.baf)
