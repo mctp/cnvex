@@ -28,12 +28,13 @@ OPTS <- list(
     seg.strategy="joint",
     seg.method="CBS",
     seg.sd.prune=TRUE,
+    seg.local.sd=FALSE,
     seg.sd.lr.penalty=1,
     seg.sd.baf.penalty=1,
-    seg.local.sd=FALSE,
-    seg.min.tile=3,
-    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=3),
-    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=3),
+    seg.len.prune=TRUE,
+    seg.len.min=2,
+    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=2),
+    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=2),
 
     #### GC-content
     gc.adjust.trend=TRUE,

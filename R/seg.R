@@ -2,7 +2,7 @@
     1/x
 }
 
-.runJointSeg <- function(arm, method, tile.width, min.tile, only.target=TRUE) {
+.runJointSeg <- function(arm, method, tile.width, len.min, cbs.lr, cbs.baf, only.target) {
     arm.lr <- arm$lr.smooth
     arm.baf <- arm$baf
     if (only.target) {
@@ -12,7 +12,7 @@
     ## make sure we have enough points to segment
     n.points <- sum(!is.na(arm.lr) & !is.na(arm.baf))
     seg0 <- integer()
-    if (n.points >= 2*min.tile) {
+    if (n.points >= 2*len.min) {
         if (method %in% c("RBS", "DynamicProgramming")) {
             tile.per.mb <- 1e6 / tile.width
             opt.K <- ceiling(n.points / tile.per.mb)
@@ -20,8 +20,8 @@
                 jointSeg(cbind(arm.lr, arm.baf), method=method, K=opt.K)$bestBkp
             )
         } else if (method=="CBS") {
-            seg0.lr <- .runCBS(arm.lr, opts$seg.cbs.lr)
-            seg0.baf <- .runCBS(arm.baf, opts$seg.cbs.baf)
+            seg0.lr <- .runCBS(arm.lr, cbs.lr)
+            seg0.baf <- .runCBS(arm.baf, cbs.baf)
             seg0 <- unique(sort(c(seg0.lr, seg0.baf)))
         } else {
             stop("Joint segmentation method not supported.")
@@ -30,55 +30,59 @@
     return(seg0)
 }
 
-.jointSegArm <- function(arm, sd.lr, sd.baf, method, min.tile, tile.width, sd.prune) {
-    ## initial segmentation
-    seg0 <- .runJointSeg(arm, method, tile.width, min.tile)
-    ## skip short segments
-    bpt0 <- c(0, seg0) + 1
-    len0 <- diff(bpt0)
-    seg1 <- seg0[len0>=min.tile]
-    if (length(seg1)>0) {
-        ## corner-case
-        if ((length(arm)-tail(seg1, 1)) < min.tile) {
-            seg1 <- head(seg1, -1)
-        }
-        ## got at least one breakpoint
-        if (length(seg1)>0) {
-            bpt1 <- c(1, seg1 + 1)
-            len1 <- diff(c(bpt1, length(arm)+1))
-            idx1 <- rep(seq_along(bpt1), len1)
-            ## remove spurious breakpoints
-            if (sd.prune) {
-                ## compute breakpoints stats
-                lr1 <- split(arm$lr.smooth, idx1)
-                baf1 <- split(arm$baf, idx1)
-                stat1 <- data.table(
-                    seg1=seg1,
-                    lr.diff =sapply(2:length(bpt1), function(i) .absMedDiff( lr1[[i]],  lr1[[i-1]])),
-                    baf.diff=sapply(2:length(bpt1), function(i) .absMedDiff(baf1[[i]], baf1[[i-1]])),
-                    min.len =sapply(2:length(bpt1), function(i) min(length(lr1[[i]]), length(lr1[[i-1]])))
-                )
-                stat1[is.na(lr.diff), lr.diff:=0]
-                stat1[is.na(baf.diff), baf.diff:=0]
-                stat1[,len.penalty:=.len.penalty(min.len)]
-                ## drop breakpoints below threshold
-                seg2 <- stat1[(
-                    lr.diff  > sd.lr  + sd.lr  * len.penalty |
-                    baf.diff > sd.baf + sd.baf * len.penalty
-                ), seg1]
-                bpt2 <- c(1, seg2 + 1)
-                len2 <- diff(c(bpt2, length(arm)+1))
-                idx2 <- rep(seq_along(bpt2), len2)
-                arm$seg <- idx2
-            } else {
-                arm$seg <- idx1
-            }
-        } else {
-            arm$seg <- 1L
-        }
-    } else {
-        arm$seg <- 1L
+.mergeBreakpoints <- function(seg0, arm) {
+    best1 <- integer()
+    ## got at least one breakpoint
+    if (length(seg0) > 0) {
+        ## compute breakpoint stats
+        beg0 <- c(1, seg0+1)
+        end0 <- c(seg0, length(arm))
+        len0 <- diff(c(0, end0))
+        idx0 <- rep(seq_along(beg0), len0)
+        lr0 <- split(arm$lr.smooth, idx0)
+        baf0 <- split(arm$baf, idx0)
+        stat0 <- data.table(
+            seg=seg0,
+            lr.diff =sapply(2:length(beg0), function(i) .absMedDiff( lr0[[i]],  lr0[[i-1]])),
+            baf.diff=sapply(2:length(beg0), function(i) .absMedDiff(baf0[[i]], baf0[[i-1]])),
+            min.len =sapply(2:length(beg0), function(i) min(length(lr0[[i]]), length(lr0[[i-1]])))
+        )
+        stat0[is.na(lr.diff), lr.diff:=0]
+        stat0[is.na(baf.diff), baf.diff:=0]
+        stat0[,len.penalty:=.len.penalty(min.len)]
+        ## pick weakest breakpoint to merge
+        stat0 <- stat0[order(lr.diff, baf.diff)]
+        seg1 <- stat0[(
+             lr.diff <  sd.lr +  sd.lr * len.penalty &
+            baf.diff < sd.baf + sd.baf * len.penalty
+        ), seg]
+        best1 <- head(seg1, 1)
     }
+    return(best1)
+}
+
+.jointSegArm <- function(arm, sd.lr, sd.baf, method, tile.width, len.min, cbs.lr, cbs.baf, sd.prune, len.prune) {
+    ## initial segmentation
+    seg1 <- .runJointSeg(arm, method, tile.width, len.min, cbs.lr, cbs.baf, TRUE)
+    ## iteratively remove spurious breakpoints
+    if (sd.prune) {
+        repeat({
+            best1 <- .mergeBreakpoints(seg1, arm)
+            seg1 <- setdiff(seg1, best1)
+            if (length(best1) == 0) {break}
+        })
+    }
+    ## skip short segments
+    if (len.prune) {
+        end1 <- c(seg1, length(arm))
+        len1 <- diff(c(0, end1))
+        seg1 <- head(end1[len1>=len.min], -1)
+    }
+    ## append segmentation
+    bpt1 <- c(1, seg1 + 1)
+    len1 <- diff(c(bpt1, length(arm)+1))
+    idx1 <- rep(seq_along(bpt1), len1)
+    arm$seg <- idx1
     return(arm)
 }
 
@@ -95,8 +99,9 @@ jointSegment <- function(cnv, opts) {
     sd.lr <- estimateSd(cnv$tile$lr.smooth) * opts$seg.sd.lr.penalty
     sd.baf <- estimateSd(cnv$tile$baf) * opts$seg.sd.baf.penalty
     ## create segmentation
-    cnv$tile <- .addJointSeg(cnv$tile, sd.lr, sd.baf,
-                             opts$seg.method, opts$seg.min.tile, opts$tile.width, opts$seg.sd.prune)
+    cnv$tile <- .addJointSeg(cnv$tile, sd.lr, sd.baf, opts$seg.method,
+                             opts$tile.width, opts$seg.len.min, opts$seg.cbs.lr,
+                             opts$seg.cbs.baf, opts$seg.sd.prune, opts$seg.len.prune)
     cnv$seg <- unname(unlist(range(split(cnv$tile, cnv$tile$seg))))
     return(cnv)
 }
