@@ -1,4 +1,4 @@
-.geneLogRatio <- function(cnv, opts) {
+.geneCSV <- function(cnv, opts) {
     ## data
     off <- .detect.offset(cnv, opts)
     tile <- cnv$tile
@@ -25,4 +25,14 @@
                  tmp.seg[,.(n.seg, lr.seg, mzd.seg)],
                  tmp.loc[,.(n.loc, lr.loc, mzd.loc)])
     return(tmp)
+}
+
+.segmentCSV <- function(cnv, opts) {
+    tmp <- as.data.table(mcols(cnv$tile)[,c("lr.smooth", "baf", "seg")])
+    tmp <- tmp[,.(lr=mean(lr.smooth, na.rm=TRUE), mzd=mean(baf, na.rm=TRUE), .N),by=seg]
+    seg <- as.data.table(cnv$seg)[,.(chr=seqnames, start, end, seg=.I)]
+    setkey(seg, seg)
+    setkey(tmp, seg)
+    seg.stat <- tmp[seg,.(chr, start, end, N, lr, mzd)]
+    return(seg.stat)
 }

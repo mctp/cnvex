@@ -156,7 +156,7 @@ tocsv <- function() {
                             default=4L,
                             help="Number of cores"),
         optparse::make_option(c("-t", "--type"), type="character",
-                              default="genelr",
+                              default="gene",
                               help="Output type"),
         optparse::make_option(c("-i", "--inp"), type="character",
                               default=NULL,
@@ -180,9 +180,13 @@ tocsv <- function() {
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
     opts <- getOpts(args$config, opts=list(cores=args$cores))
     cnv <- readRDS(args$inp)
-    if (args$type == "genelr") {
-        csv <- .dtRound(.geneLogRatio(cnv, opts))
-    } else {
+    if (args$type == "gene") {
+        csv <- .dtRound(.geneCSV(cnv, opts))
+    }
+    else if (args$type == "segment") {
+        csv <- .dtRound(.segmentCSV(cnv, opts))
+    }
+    else {
         optparse::print_help(parser)
         write("Output type not supported.\n", stderr())
         quit("no", 1)
@@ -244,7 +248,7 @@ plot <- function() {
         suppressMessages(ggsave(args$out, plt, width=7, height=7))
     }
     if (args$type=="cnv") {
-        plt <- plotCNV(cnv, sel.lr = args$lr, sel.chr = args$chr)
+        plt <- plotCNV(cnv, opts, sel.lr = args$lr, sel.chr = args$chr)
         if (is.null(args$out)) {
             if (is.null(args$chr)) {
                 args$out <- str_replace(args$inp, ".rds$", sprintf("-cnv-%s.png", args$lr))
