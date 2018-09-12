@@ -18,7 +18,7 @@ plotGC <- function(cnv) {
     return(plt)
 }
 
-plotCNV <- function(cnv, sel.lr="lr.smooth", sel.chr=NULL) {
+plotCNV <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
