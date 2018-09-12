@@ -35,7 +35,7 @@ OPTS <- list(
     seg.len.min=2,
     seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=2),
     seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=2),
-    seg.rbs.selection="none",
+    seg.rbs.selection="Lebarbier",
     
     #### GC-content
     gc.adjust.trend=TRUE,
