@@ -12,7 +12,7 @@
     tmp.seg <- tmp.seg[gene$seg, .(n.seg=N, lr.seg, mzd.seg)]
 
     ## local
-    tmp.loc <- as.data.table(findOverlaps(gene, tile, maxgap = opts$tileflank * opts$tile.width))
+    tmp.loc <- as.data.table(findOverlaps(gene, tile, maxgap = opts$lr.loc.tileflank * opts$tile.width))
     tmp.loc <- cbind(tmp.loc,
                      tile.data[tmp.loc$subjectHits, .(lr.smooth, baf)]
                      )
