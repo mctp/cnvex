@@ -7,7 +7,7 @@
         stop("by should be a file or window-size")
     }
     prefix <- tempfile("mosdepth_")
-    ret <- system2("mosdepth", sprintf("-F 772 -n -t%s -b %s %s %s", cores, by, prefix, bam))
+    ret <- system2("mosdepth", sprintf("-Q 10 -F 772 -n -t%s -b %s %s %s", cores, by, prefix, bam))
     out.fn <- list.files(dirname(prefix), paste0(basename(prefix), ".regions.bed.gz$"),
                          full.names = TRUE)
     if (!ret & file.exists(out.fn)) {
