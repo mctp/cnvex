@@ -28,7 +28,6 @@ OPTS <- list(
     seg.strategy="joint",
     seg.method="CBS",
     seg.sd.prune=TRUE,
-    seg.local.sd=FALSE,
     seg.sd.lr.penalty=1,
     seg.sd.baf.penalty=1,
     seg.len.prune=TRUE,
@@ -46,6 +45,7 @@ OPTS <- list(
     gc.adjust.off=c(NA_real_, NA_real_),
 
     #### optimization
+    opt.local.sd=FALSE,
     grid.n=64,
     p.lo=0.05,
     p.hi=0.95,
