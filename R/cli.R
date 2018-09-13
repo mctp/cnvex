@@ -4,7 +4,7 @@ importCNVEX <- function(opts, tn.vcf, t.bam, n.bam) {
     var <- importVcf(tn.vcf, tile, opts)
     tile <- rawLogRatio(t.bam, n.bam, tile, opts)
     cnv <- list(var=var, tile=tile)
-    cnv <- getGene(cnv, opts)
+    cnv <- addGene(cnv, opts)
     return(cnv)
 }
 
@@ -131,7 +131,7 @@ segment <- function() {
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
     opts <- getOpts(args$config, opts=list(cores=args$cores))
     cnv <- readRDS(args$inp)
-    cnv <- getBaf(cnv, opts)
+    cnv <- addBaf(cnv, opts)
     cnv <- jointSegment(cnv, opts)
     cnv <- getSeg(cnv, opts)
     if (is.null(args$out)) {

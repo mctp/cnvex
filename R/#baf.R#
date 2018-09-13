@@ -87,3 +87,19 @@
     gt$baf <- .smooth.outliers.gr(gt, "baf")
     return(gt)
 }
+.addBaf <- function(gt, snp) {
+    hits <- findOverlaps(gt, snp)
+    bad=ifelse(snp[subjectHits(hits)]$t.AF<0.5,
+               round(   snp[subjectHits(hits)]$t.AF  * snp[subjectHits(hits)]$t.DP),
+               round((1-snp[subjectHits(hits)]$t.AF) * snp[subjectHits(hits)]$t.DP))
+    tmp <- data.table(
+        idx=queryHits(hits),
+        bad=bad,
+        depth=snp[subjectHits(hits)]$t.DP
+    )
+    setkey(tmp, idx)
+    tmp <- tmp[J(1:length(gt))]
+    tmp <- tmp[,.(baf=sum(bad)/sum(depth)),by=idx]
+    gt$baf <- tmp$baf
+    return(gt)
+}
