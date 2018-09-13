@@ -20,7 +20,7 @@
     return(x)
 }
 
-.llik.rC.p.D.full <- function(rC, p, D, max.sC, max.len.per.probe) {
+.llik.rC.p.D <- function(rC, p, D, max.sC, max.len.per.probe) {
     ## compute likelihood for each segment and each C
     x <- .llik.rC.p.D.inner(rC, p, D)
     ## define sub-clonal segments
@@ -33,7 +33,7 @@
 }
 
 .llik.rC.p.D.best <- function(rC, p, D, max.sC, max.len.per.probe) {
-    x <- .llik.rC.p.D.full(rC, p, D, max.sC, max.len.per.probe)
+    x <- .llik.rC.p.D(rC, p, D, max.sC, max.len.per.probe)
     ## for each segment pick C with highest llik
     x <- x[order(-norm),.SD[1],by=seg]
     return(x)
@@ -52,41 +52,16 @@
     return(y)
 }
 
-
-## .llik.full <- function(data, pi, Di, maxC) {
-##     rC <- .grid.rC(data$seg, data$lr, data$sd, data$len, maxC)
-##     CL <- rbindlist(mclapply(seq_len(length(pi)), function(i) {
-##         .llik.full.inner(rC, pi[i], Di[i])
-##     }, mc.cores=detectCores()))
-##     seg.stats <- data[,.(lr=mean(lr,na.rm=TRUE), n.lr=n.lr[1]), by=seg]
-##     setkey(seg.stats, seg)
-##     setkey(CL, seg)
-##     CL <- CL[seg.stats]
-##     CL[,sC := (2^(lr) * Di)/pi - ((2 * (1 - pi))/pi)]
-##     return(CL)
-## }
-
-
-## .llik.best <- function(data, pi, Di, maxC) {
-##     rC <- .grid.rC(data$seg, data$lr, data$sd, data$len, maxC)
-##     CL <- rbindlist(mclapply(seq_len(length(pi)), function(i) {
-##         .llik.best.inner(rC, pi[i], Di[i])
-##     }, mc.cores=detectCores()))
-##     seg.stats <- data[,.(lr=mean(lr, na.rm=TRUE), n.lr=n.lr[1]), by=seg]
-##     setkey(seg.stats, seg)
-##     setkey(CL, seg)
-##     CL <- CL[seg.stats]
-##     CL[,sC := (2^(lr) * Di)/pi - ((2 * (1 - pi))/pi)]
-##     return(CL)
-## }
-
-## ##
-## .cand.lr <- function(cand, data) {
-##     seg <- data[,.(lr=mean(lr, na.rm=TRUE),
-##                    n.lr=seg.n[1]
-##                    ), by=seg]
-##     setkey(cand, seg)
-##     setkey(seg, seg)
-##     cand <- cand[seg]
-##     return(cand)
-## }
+.llik.baf.MC <- function(snpt, MC) {
+    tmp1 <- rbindlist(rep(list(snpt), nrow(MC)))[order(idx)]
+    tmp2 <- rbindlist(rep(list(MC), nrow(snpt)))
+    x <- cbind(tmp1, tmp2)
+    x[,
+      beta:=dbeta(
+          Ef,
+          shape1=   t.AF  * t.DP + 1,
+          shape2=(1-t.AF) * t.DP + 1,
+          log=TRUE
+      )]
+    return(x)
+}

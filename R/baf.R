@@ -92,10 +92,3 @@ getBaf <- function(cnv, opts) {
     cnv$tile <- .getBaf(cnv$tile, cnv$var, opts)
     return(cnv)
 }
-
-bafData <- function(cnv, opts) {
-    tmp <- as.data.table(mcols(cnv$var)[,c("t.AF", "t.DP", "seg")])
-    tmp$germline <- filterGermlineHets(cnv$tile, cnv$var, opts)
-    tmp[,idx:=1:nrow(tmp)]
-    return(tmp[])
-}

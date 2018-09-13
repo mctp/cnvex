@@ -23,12 +23,34 @@
     return(rC)
 }
 
-## inner likelihood function
-lrGrid <- function(data, opts) {
-    rC <- .lr.grid.rC(data$seg, data$lr, data$sd, data$len, data$nC, opts$max.C)
-    pD <- .lr.grid.pD(opts$grid.n, opts$p.lo, opts$p.hi, opts$D.lo, opts$D.hi)
-    grid <- rbindlist(mclapply(seq_len(nrow(pD)), function(i) {
-        .llik.rC.p.D.wrap(rC, pD[i,1], pD[i,2], opts$max.sC, opts$max.len.per.probe)
-    }, mc.cores=detectCores()))
-    return(grid)
+## prior for C
+.priorC <- function(C, D, Cmax, e=1) {
+    a <- 1/(abs((0:7)-D)+e)
+    b <- log(a/sum(a))
+    b[C+1]
+}
+
+## prior for K
+.priorK <- function(K, C, e=1) {
+    log(1/(floor((C)/2) + e))
+}
+
+## MC grid generation
+.baf.grid.MC <- function(p, D, Cmax) {
+    beta.grid <- as.data.table(expand.grid(M=0:Cmax,C=0:Cmax))[M<=C]
+    beta.grid[,":="(
+        Ef=(p * M + 1 * (1-p)) / (p * C + 2 * (1-p)),
+        K=pmin(M,C-M)
+    )]
+    ## priors
+    beta.grid[,":="(
+        PC=.priorC(C, D, Cmax),
+        PK=.priorK(K, C)
+    )]
+    ## M - number of chromosome with variant
+    ## C - total number of chromosomes
+    ## Ef - expected frequency of variant
+    ## PK - prior probability of K given C
+    ## PC - prior probability of C given D
+    return(beta.grid[])
 }
