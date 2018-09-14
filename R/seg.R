@@ -14,8 +14,12 @@
     seg0 <- integer()
     if (n.points >= 2*len.min) {
         if (method %in% c("RBS", "DynamicProgramming")) {
-            tile.per.mb <- 1e6 / tile.width
-            opt.K <- ceiling(n.points / tile.per.mb)
+            if (!is.na(tile.width)) {
+                tile.per.mb <- 1e6 / tile.width
+                opt.K <- ceiling(n.points / tile.per.mb)
+            } else {
+                opt.K <- max(2, floor(n.points / (2*len.min)))
+            }
             seg0 <- suppressWarnings(sort(unique(jointSeg(
                 cbind(arm.lr, arm.baf), method=method, modelSelectionMethod=rbs.selection, K=opt.K)$bestBkp)))
         } else if (method=="CBS") {
@@ -91,30 +95,4 @@
     tmp <- paste(gt$arm, gt$seg)
     gt$seg <- as.integer(factor(tmp, levels=unique(tmp)))
     return(gt)
-}
-
-jointSegment <- function(cnv, opts) {
-    ## estimated standard-deviation
-    sd.lr <- estimateSd(cnv$tile$lr.smooth) * opts$seg.sd.lr.penalty
-    sd.baf <- estimateSd(cnv$tile$baf) * opts$seg.sd.baf.penalty
-    ## create segmentation
-    cnv$tile <- .addJointSeg(cnv$tile, sd.lr, sd.baf, opts$seg.method,
-                             opts$tile.width, opts$seg.len.min, opts$seg.cbs.lr,
-                             opts$seg.cbs.baf, opts$seg.rbs.selection, opts$seg.sd.prune, opts$seg.len.prune)
-    cnv$seg <- unname(unlist(range(split(cnv$tile, cnv$tile$seg))))
-    return(cnv)
-}
-
-getSeg <- function(cnv, opts) {
-    ## seg -> var
-    cnv$var$seg <- findOverlaps(cnv$var, cnv$seg, select="first", maxgap = opts$tile.shoulder-1)
-    ## seg -> gene
-    hit.prom <- as.data.table(findOverlaps(promoters(cnv$gene, 0, 1), cnv$seg))
-    hit.gene <- as.data.table(findOverlaps(cnv$gene, cnv$seg))
-    hit.gene <- hit.gene[!(queryHits %in% hit.prom$queryHits)]
-    hit.gene <- hit.gene[,.SD[1],by=queryHits]
-    hit <- rbind(hit.prom, hit.gene)
-    cnv$gene$seg <- NA_real_
-    cnv$gene$seg[hit$queryHits] <- hit$subjectHits
-    return(cnv)
 }

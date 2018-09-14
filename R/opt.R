@@ -1,5 +1,5 @@
 ## data generation
-lrData <- function(cnv, opts) {
+covData <- function(cnv, opts) {
     tile <- cnv$tile
     segs <- cnv$seg
     tmp <- data.table(
@@ -29,7 +29,7 @@ bafData <- function(cnv, opts) {
     return(tmp)
 }
 
-lrGrid <- function(data, opts) {
+covGrid <- function(data, opts) {
     rC <- .lr.grid.rC(data$seg, data$lr, data$sd, data$len, data$nC, opts$max.C)
     pD <- .lr.grid.pD(opts$grid.n, opts$p.lo, opts$p.hi, opts$D.lo, opts$D.hi)
     grid <- rbindlist(mclapply(seq_len(nrow(pD)), function(i) {

@@ -10,8 +10,8 @@ importCNVEX <- function(opts, tn.vcf, t.bam, n.bam) {
 
 #' @export
 adjustCNVEX <- function(opts, cnv) {
-    cnv <- gcLogRatio(cnv, opts)
-    cnv <- smoothLogRatio(cnv, opts)
+    cnv <- addCorrectLogRatio(cnv, opts)
+    cnv <- addSmoothLogRatio(cnv, opts)
     return(cnv)
 }
 
@@ -26,13 +26,13 @@ basic <- function() {
                             default=4L,
                             help="Number of cores"),
         optparse::make_option(c("-t", "--tumor"), type="character",
-                              default=NULL,
+                              default="",
                               help="preset"),
         optparse::make_option(c("-n", "--normal"), type="character",
-                              default=NULL,
+                              default="",
                               help="preset"),
         optparse::make_option(c("-v", "--vcf"), type="character",
-                              default=NULL,
+                              default="",
                               help="Somatic VCF file"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default="cnvex.rds",
@@ -49,7 +49,19 @@ basic <- function() {
       )
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
-    opts <- getOpts(args$config, list(cores=args$cores))
+
+    config <- resolveConfig(args$config)
+    if (config=="") {
+        optparse::print_help(parser)
+        write("Config file not found.\n", stderr())
+        quit("no", 1)
+    }
+    opts <- getOpts(config, opts=list(cores=args$cores))
+    if(!file.exists(args$tumor) || !file.exists(args$normal) || !file.exists(args$vcf)) {
+        optparse::print_help(parser)
+        write("Inpute file(s) not found.\n", stderr())
+        quit("no", 1)
+    }
     cnvex <- importCNVEX(opts, args$vcf, args$tumor, args$normal)
     saveRDS(cnvex, args$out)
 }
@@ -85,8 +97,21 @@ adjust <- function() {
       )
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
-    opts <- getOpts(args$config, opts=list(cores=args$cores))
+
+    config <- resolveConfig(args$config)
+    if (config=="") {
+        optparse::print_help(parser)
+        write("Config file not found.\n", stderr())
+        quit("no", 1)
+    }
+    opts <- getOpts(config, opts=list(cores=args$cores))
+    if(!file.exists(args$inp)) {
+        optparse::print_help(parser)
+        write("Input file not found.\n", stderr())
+        quit("no", 1)
+    }
     cnv <- readRDS(args$inp)
+    
     cnv <- adjustCNVEX(opts, cnv)
     if (is.null(args$out)) {
         if (!is.null(args$suffix)) {
@@ -129,11 +154,23 @@ segment <- function() {
       )
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
-    opts <- getOpts(args$config, opts=list(cores=args$cores))
+
+    config <- resolveConfig(args$config)
+    if (config=="") {
+        optparse::print_help(parser)
+        write("Config file not found.\n", stderr())
+        quit("no", 1)
+    }
+    opts <- getOpts(config, opts=list(cores=args$cores))
+    if(!file.exists(args$inp)) {
+        optparse::print_help(parser)
+        write("Inpute file not found.\n", stderr())
+        quit("no", 1)
+    }
     cnv <- readRDS(args$inp)
+    
     cnv <- addBaf(cnv, opts)
-    cnv <- jointSegment(cnv, opts)
-    cnv <- getSeg(cnv, opts)
+    cnv <- addJointSegment(cnv, opts)
     if (is.null(args$out)) {
         if (!is.null(args$suffix)) {
             args$out <- str_replace(args$inp, ".rds$", sprintf("-seg-%s.rds", args$suffix))
@@ -200,6 +237,7 @@ tocsv <- function() {
 #' @export
 plot <- function() {
     suppressPackageStartupMessages(library(ggpubr))
+    suppressPackageStartupMessages(library(ggsci))
     suppressPackageStartupMessages(library(gridExtra))
 
     option_list = list(
@@ -237,15 +275,32 @@ plot <- function() {
       )
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
-    opts <- getOpts(args$config, opts=list(cores=args$cores))
-    
+
+    config <- resolveConfig(args$config)
+    if (config=="") {
+        optparse::print_help(parser)
+        write("Config file not found.\n", stderr())
+        quit("no", 1)
+    }
+    opts <- getOpts(config, opts=list(cores=args$cores))
+
+    if(!file.exists(args$inp)) {
+        optparse::print_help(parser)
+        write("Input file not found.\n", stderr())
+        quit("no", 1)
+    }
     cnv <- readRDS(args$inp)
+    
     if (args$type=="gc") {
         plt <- plotGC(cnv)
         if (is.null(args$out)) {
             args$out <- str_replace(args$inp, ".rds$", "-gc.png")
         }
-        suppressMessages(ggsave(args$out, plt, width=7, height=7))
+        dummy <- capture.output({
+            pdf(NULL)
+            suppressMessages(ggsave(args$out, plt, width=15, height=5))
+            dev.off()
+        })
     }
     if (args$type=="cnv") {
         plt <- plotCNV(cnv, opts, sel.lr = args$lr, sel.chr = args$chr)
@@ -256,7 +311,11 @@ plot <- function() {
                 args$out <- str_replace(args$inp, ".rds$", sprintf("-cnv-%s-%s.png", args$lr, args$chr))
             }
         }
-        suppressMessages(ggsave(args$out, plt, width=15, height=5))
+        dummy <- capture.output({
+            pdf(NULL)
+            suppressMessages(ggsave(args$out, plt, width=15, height=5))
+            dev.off()
+        })
     }
     if (args$type=="seg") {
         plt <- plotSeg(cnv, opts, sel.chr = args$chr)
@@ -267,6 +326,10 @@ plot <- function() {
                 args$out <- str_replace(args$inp, ".rds$", sprintf("-seg-%s.png", args$chr))
             }
         }
-        suppressMessages(ggsave(args$out, plt, width=15, height=5))
+        dummy <- capture.output({
+            pdf(NULL)
+            suppressMessages(ggsave(args$out, plt, width=15, height=5))
+            dev.off()
+        })
     }
 }

@@ -25,8 +25,3 @@
     }
     return(lr)
 }
-
-gcLogRatio <- function(cnv, opts) {
-    cnv$tile$lr.gc <- .correctGC(cnv$tile, opts)
-    return(cnv)
-}

@@ -31,13 +31,15 @@ merge.list <- function (x, y) {
     return(abd)
 }
 
-getOpts <- function(target, opts=list()) {
-    if (file.exists(target)) {
-        conf.fn <- target
-    } else {
-        conf.fn <- system.file(sprintf("extdata/conf/%s.R", target), package="cnvex")
+
+resolveConfig <- function(config) {
+    if (!file.exists(config)) {
+        config <- system.file(sprintf("extdata/conf/%s.R", config), package="cnvex")
     }
-    stopifnot(file.exists(conf.fn))
+    return(config)
+}
+
+getOpts <- function(conf.fn, opts=list()) {
     ENV = new.env(parent = .BaseNamespaceEnv)
     source(conf.fn, local=ENV)
     opts <- merge.list(opts, ENV$OPTS)

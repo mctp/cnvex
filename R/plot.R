@@ -92,8 +92,10 @@ plotCNV <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
             axis.ticks.x = element_blank(),
             axis.text.x = element_blank()
         )
-    
-    plt <- rbind(ggplotGrob(cov.plt), ggplotGrob(snp.plt), size = "last")
+    capture.output({pdf(NULL)
+        plt <- rbind(ggplotGrob(cov.plt), ggplotGrob(snp.plt), size = "last")
+        dev.off()
+    })
     return(plt)
 }
 
@@ -101,7 +103,7 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
-    germline <- filterGermlineHets(cnv$tile, cnv$var, opts)
+    germline <- .filterGermlineHets(cnv$tile, cnv$var, opts)
     snp <- cnv$var[germline]
     snp <- snp[seqnames(snp) %in% sel.chr]
     cov <- cnv$tile
@@ -131,13 +133,13 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov.dt <- rbind(cov.dt, snp.dt[,.SD[1],by=chr][,.(chr, pos, val=0.0, seg=0, type="COV", tgt=TRUE)])
 
     ## COV
-    cov.plt <- ggplot(cov.dt) + facet_grid(.~chr, scales="free_x") +
+    cov.plt <- ggplot(cov.dt) +
+        facet_grid(.~chr, scales="free_x") +
         aes(x=pos, y=val, color=factor(ifelse(!tgt,4,as.integer(seg%%3)))) +
-        scale_color_npg(guide=FALSE) +        
-        geom_point(size=0.75, alpha=0.5, shape=16) +
         coord_cartesian(ylim=c(min(-3, min(cov.dt$val, na.rm=TRUE)),
                                max (3, max(cov.dt$val, na.rm=TRUE)))) +
-        coord_cartesian(ylim=c(-3,3)) +
+        scale_color_npg(guide=FALSE) +        
+        geom_point(size=0.75, alpha=0.5, shape=16) +
         geom_hline(yintercept = 0, color="blue") +
         theme_pubr() +
         ylab("log2(tumor/normal)") +
@@ -156,10 +158,11 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
         p.size=0.5
         p.alpha=0.75
     }
-    snp.plt <- ggplot(snp.dt) + facet_grid(.~chr, scales="free_x") +
+    snp.plt <- ggplot(snp.dt) +
+        facet_grid(.~chr, scales="free_x") +
         aes(x=pos, y=val, color=factor(as.integer(seg%%3))) +
-        geom_point(size=p.size, alpha=p.alpha, shape=16) +
         coord_cartesian(ylim=c(0,1)) +
+        geom_point(size=p.size, alpha=p.alpha, shape=16) +
         scale_color_npg(guide=FALSE) +
         theme_pubr() +
         ylab("BAF") +
@@ -169,8 +172,11 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
             axis.ticks.x = element_blank(),
             axis.text.x = element_blank()
         )
-    
-    plt <- rbind(ggplotGrob(cov.plt), ggplotGrob(snp.plt), size = "last")
+    capture.output({
+        pdf(NULL)
+        plt <- rbind(ggplotGrob(cov.plt), ggplotGrob(snp.plt), size = "last")
+        dev.off()
+    })
     return(plt)
 }
 

@@ -32,14 +32,3 @@
     })))
     return(lr.smooth)
 }
-
-smoothLogRatio <- function(cnv, opts) {
-    cnv$tile$lr.smooth <- cnv$tile$lr.gc
-    if (opts$lr.smooth=="hybrid") {
-        ## hybrid smooth only on targeted
-        cnv$tile$lr.smooth[cnv$tile$target] <- .smoothLogRatio(cnv$tile[cnv$tile$target], opts)
-    } else if (opts$lr.smooth=="outlier") {
-        cnv$tile$lr.smooth <- .smoothOutliers(cnv$tile, opts)
-    }
-    return(cnv)
-}

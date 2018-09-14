@@ -20,5 +20,4 @@
 #' @importFrom jointseg jointSeg estimateSd
 #' @importFrom raster raster focal Which
 #' @importFrom robfilter hybrid.filter
-#' @importFrom ggsci scale_color_npg
 NULL

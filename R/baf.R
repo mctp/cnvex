@@ -34,7 +34,12 @@
 }
 
 .filterTargetGermlineHets <- function(gt, var, opts) {
-    splash <- gt[gt$target] + opts$shoulder
+    min.qual <- quantile(var$QUAL, opts$baf.qual.min, na.rm=TRUE)
+    t.hi.dp <- quantile(var$t.DP, 0.95)
+    t.lo.dp <- quantile(var$t.DP, 0.05)
+    n.hi.dp <- quantile(var$n.DP, 0.95)
+    n.lo.dp <- quantile(var$n.DP, 0.05)
+    splash <- gt[gt$target] + opts$tile.shoulder
     germline <-
         var %over% splash &
         ## germline
@@ -46,10 +51,12 @@
         ## right range
         var$n.AF > opts$baf.het.range[1] & var$n.AF < opts$baf.het.range[2] &
         ## high 
-        var$n.DP > 16 &
-        var$t.DP > 16 &
+        var$n.DP > opts$baf.min.n.dp &
+        var$t.DP > opts$baf.min.t.dp &
         ## mappability
-        (!var$mask.strict)
+        var$t.DP > t.lo.dp & var$t.DP < t.hi.dp &
+        var$n.DP > n.lo.dp & var$n.DP < n.hi.dp &
+        (!var$mask.loose & (!var$mask.strict | var$QUAL > min.qual))
     return(germline)
 }
 
@@ -59,7 +66,7 @@
     } else {
         snp.filter.fun <- .filterTargetGermlineHets
     }
-    germline <- snp.filter.fun(gt, var, opts)
+    germline <- snp.filter.fun(tile, var, opts)
     return(germline)
 }
 

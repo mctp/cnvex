@@ -21,6 +21,7 @@ OPTS <- list(
 
     #### BAF
     baf.min.t.dp=12,
+    baf.min.n.dp=0,
     baf.het.range=c(0.3, 0.7),
     baf.qual.min=0.25,
 
@@ -46,14 +47,14 @@ OPTS <- list(
 
     #### optimization
     opt.local.sd=FALSE,
-    grid.n=64,
-    p.lo=0.05,
-    p.hi=0.95,
-    D.lo=1,
-    D.hi=6,
-    max.C=9,
-    max.sC=20,
-    max.len.per.probe=1e6,
-    res=0.1
+    opt.grid.n=64,
+    opt.p.lo=0.05,
+    opt.p.hi=0.95,
+    opt.D.lo=1,
+    opt.D.hi=6,
+    opt.max.C=9,
+    opt.max.sC=20,
+    opt.max.len.per.probe=1e6,
+    opt.res=0.1
 
 )

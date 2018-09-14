@@ -19,15 +19,24 @@ OPTS <- list(
     lr.smooth.window=13,
     lr.loc.tileflank=NA_integer_,
 
+    #### BAF
+    baf.min.t.dp=36,
+    baf.min.n.dp=20,
+    baf.het.range=c(0.3, 0.7),
+    baf.qual.min=0.25,
+
     #### segmentation
     seg.strategy="joint",
     seg.method="RBS",
     seg.sd.prune=TRUE,
-    seg.sd.lr.penalty=1,
-    seg.sd.baf.penalty=1,
-    seg.local.sd=FALSE,
-    seg.min.tile=3,
-
+    seg.sd.lr.penalty=2,
+    seg.sd.baf.penalty=2,
+    seg.len.prune=TRUE,
+    seg.len.min=2,
+    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=2),
+    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=2),
+    seg.rbs.selection="Lebarbier",
+    
     #### GC-content
     gc.adjust.trend=TRUE,
     gc.adjust.offset=TRUE,
@@ -37,13 +46,15 @@ OPTS <- list(
     gc.adjust.off=c(0.0, 1.0),
 
     #### optimization
-    grid.n=64,
-    p.lo=0.05,
-    p.hi=0.95,
-    D.lo=1,
-    D.hi=6,
-    max.C=9,
-    max.sC=20,
-    max.len.per.probe=1e6,
-    res=0.1
+    opt.local.sd=FALSE,
+    opt.grid.n=64,
+    opt.p.lo=0.05,
+    opt.p.hi=0.95,
+    opt.D.lo=1,
+    opt.D.hi=6,
+    opt.max.C=9,
+    opt.max.sC=20,
+    opt.max.len.per.probe=1e6,
+    opt.res=0.1
+
 )
