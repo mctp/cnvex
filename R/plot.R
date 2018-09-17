@@ -133,6 +133,7 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov.dt <- rbind(cov.dt, snp.dt[,.SD[1],by=chr][,.(chr, pos, val=0.0, seg=0, type="COV", tgt=TRUE)])
 
     ## COV
+    offset <- .detect.offset(cnv, opts)
     cov.plt <- ggplot(cov.dt) +
         facet_grid(.~chr, scales="free_x") +
         aes(x=pos, y=val, color=factor(ifelse(!tgt,4,as.integer(seg%%3)))) +
@@ -141,6 +142,7 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
         scale_color_npg(guide=FALSE) +        
         geom_point(size=0.75, alpha=0.5, shape=16) +
         geom_hline(yintercept = 0, color="blue") +
+        geom_hline(yintercept = offset, color="red") +
         theme_pubr() +
         ylab("log2(tumor/normal)") +
         theme(
