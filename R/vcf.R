@@ -50,10 +50,10 @@
     return(var.gr)
 }
 
-importVcf <- function(vcf, tile, opts) {
+importVcf <- function(vcf, opts) {
     ## import
     if (opts$caller=="vardict") {
-        var <- .importVarDict(vcf, opts)
+        var <- unlist(GRangesList(lapply(args$vcf, function(fn) .importVarDict(fn, opts))))
     } else {
         stop("Variant caller not supported.")
     }

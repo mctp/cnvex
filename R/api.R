@@ -1,8 +1,10 @@
+#' @export
 addCorrectLogRatio <- function(cnv, opts) {
     cnv$tile$lr.gc <- .correctGC(cnv$tile, opts)
     return(cnv)
 }
 
+#' @export
 addSmoothLogRatio <- function(cnv, opts) {
     cnv$tile$lr.smooth <- cnv$tile$lr.gc
     if (opts$lr.smooth=="hybrid") {
@@ -14,6 +16,7 @@ addSmoothLogRatio <- function(cnv, opts) {
     return(cnv)
 }
 
+#' @export
 addJointSegment <- function(cnv, opts) {
     ## estimated standard-deviation
     sd.lr <- estimateSd(cnv$tile$lr.smooth) * opts$seg.sd.lr.penalty
@@ -36,11 +39,14 @@ addJointSegment <- function(cnv, opts) {
     return(cnv)
 }
 
+#' @export
 addBaf <- function(cnv, opts) {
     cnv$tile <- .getBaf(cnv$tile, cnv$var, opts)
     return(cnv)
 }
 
+
+#' @export
 addCopy <- function(cnv, opts) {
     if (is.null(opts$sex)) {
         sex <- .detect.sex(cnv$var, cnv$tile)
@@ -63,9 +69,27 @@ addCopy <- function(cnv, opts) {
     return(cnv)
 }
 
+#' @export
 addGene <- function(cnv, opts) {
     gtf <- import(opts$gene.fn)
     gtf.gene <- gtf[gtf$type=="gene",c("source", "type", "gene_id", "gene_name")]
     cnv$gene <- gtf.gene
+    return(cnv)
+}
+
+#' @export
+addCorrections <- function(cnv, opts) {
+    cnv <- addCorrectLogRatio(cnv, opts)
+    cnv <- addSmoothLogRatio(cnv, opts)
+    return(cnv)
+}
+
+#' @export
+importCNVEX <- function(vcf, t.bam, n.bam, opts) {
+    tile <- getTile(opts)
+    tile <- rawLogRatio(t.bam, n.bam, tile, opts)
+    var <- importVcf(vcf, opts)
+    cnv <- list(var=var, tile=tile)
+    cnv <- addGene(cnv, opts)
     return(cnv)
 }

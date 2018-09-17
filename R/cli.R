@@ -1,21 +1,4 @@
 #' @export
-importCNVEX <- function(opts, tn.vcf, t.bam, n.bam) {
-    tile <- getTile(opts)
-    var <- importVcf(tn.vcf, tile, opts)
-    tile <- rawLogRatio(t.bam, n.bam, tile, opts)
-    cnv <- list(var=var, tile=tile)
-    cnv <- addGene(cnv, opts)
-    return(cnv)
-}
-
-#' @export
-adjustCNVEX <- function(opts, cnv) {
-    cnv <- addCorrectLogRatio(cnv, opts)
-    cnv <- addSmoothLogRatio(cnv, opts)
-    return(cnv)
-}
-
-#' @export
 basic <- function() {
 
     option_list = list(
@@ -26,14 +9,17 @@ basic <- function() {
                             default=4L,
                             help="Number of cores"),
         optparse::make_option(c("-t", "--tumor"), type="character",
-                              default="",
+                              default=NULL,
                               help="preset"),
         optparse::make_option(c("-n", "--normal"), type="character",
-                              default="",
+                              default=NULL,
                               help="preset"),
-        optparse::make_option(c("-v", "--vcf"), type="character",
-                              default="",
-                              help="Somatic VCF file"),
+        optparse::make_option(c("-g", "--gvcf"), type="character",
+                              default=NULL,
+                              help="Genome Somatic VCF file"),
+        optparse::make_option(c("-e", "--evcf"), type="character",
+                              default=NULL,
+                              help="Exome Somatic VCF file"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default="cnvex.rds",
                               help="Output file")
@@ -57,12 +43,20 @@ basic <- function() {
         quit("no", 1)
     }
     opts <- getOpts(config, opts=list(cores=args$cores))
-    if(!file.exists(args$tumor) || !file.exists(args$normal) || !file.exists(args$vcf)) {
+
+    if (
+        is.null(args$tumor) ||
+        is.null(args$normal) ||
+        is.null(args$vcf) ||
+        !file.exists(args$tumor) ||
+        !file.exists(args$normal) ||
+        !file.exists(args$vcf)
+    ) {
         optparse::print_help(parser)
-        write("Inpute file(s) not found.\n", stderr())
+        write("Input file(s) not found.\n", stderr())
         quit("no", 1)
     }
-    cnvex <- importCNVEX(opts, args$vcf, args$tumor, args$normal)
+    cnvex <- importCNVEX(c(args$gvcf, args$evcf), args$tumor, args$normal, opts)
     saveRDS(cnvex, args$out)
 }
 
@@ -105,19 +99,19 @@ adjust <- function() {
         quit("no", 1)
     }
     opts <- getOpts(config, opts=list(cores=args$cores))
-    if(!file.exists(args$inp)) {
+    if(is.null(args$inp) || !file.exists(args$inp)) {
         optparse::print_help(parser)
         write("Input file not found.\n", stderr())
         quit("no", 1)
     }
     cnv <- readRDS(args$inp)
-    
-    cnv <- adjustCNVEX(opts, cnv)
+
+    cnv <- addCorrections(cnv, opts)
     if (is.null(args$out)) {
-        if (!is.null(args$suffix)) {
-            args$out <- str_replace(args$inp, ".rds$", sprintf("-adj-%s.rds", args$suffix))
-        } else {
+        if (is.null(args$suffix)) {
             args$out <- str_replace(args$inp, ".rds$", "-adj.rds")
+        } else {
+            args$out <- str_replace(args$inp, ".rds$", sprintf("-adj-%s.rds", args$suffix))
         }
     }
     saveRDS(cnv, args$out)
@@ -162,9 +156,9 @@ segment <- function() {
         quit("no", 1)
     }
     opts <- getOpts(config, opts=list(cores=args$cores))
-    if(!file.exists(args$inp)) {
+    if(is.null(args$inp) || !file.exists(args$inp)) {
         optparse::print_help(parser)
-        write("Inpute file not found.\n", stderr())
+        write("Input file not found.\n", stderr())
         quit("no", 1)
     }
     cnv <- readRDS(args$inp)
@@ -216,7 +210,14 @@ tocsv <- function() {
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
     opts <- getOpts(args$config, opts=list(cores=args$cores))
+
+    if(is.null(args$inp) || !file.exists(args$inp)) {
+        optparse::print_help(parser)
+        write("Input file not found.\n", stderr())
+        quit("no", 1)
+    }
     cnv <- readRDS(args$inp)
+
     if (args$type == "gene") {
         csv <- .dtRound(.geneCSV(cnv, opts))
     }
@@ -284,7 +285,7 @@ plot <- function() {
     }
     opts <- getOpts(config, opts=list(cores=args$cores))
 
-    if(!file.exists(args$inp)) {
+    if(is.null(args$inp) || !file.exists(args$inp)) {
         optparse::print_help(parser)
         write("Input file not found.\n", stderr())
         quit("no", 1)
