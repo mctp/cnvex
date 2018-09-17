@@ -35,7 +35,8 @@ basic <- function() {
       )
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
-
+    args$vcf <- c(args$gvcf, args$evcf)
+    
     config <- resolveConfig(args$config)
     if (config=="") {
         optparse::print_help(parser)
@@ -56,7 +57,7 @@ basic <- function() {
         write("Input file(s) not found.\n", stderr())
         quit("no", 1)
     }
-    cnvex <- importCNVEX(c(args$gvcf, args$evcf), args$tumor, args$normal, opts)
+    cnvex <- importCNVEX(args$vcf, args$tumor, args$normal, opts)
     saveRDS(cnvex, args$out)
 }
 
