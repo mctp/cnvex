@@ -7,7 +7,7 @@
 #' @importFrom Rsamtools BamFile
 #' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
 #' @importFrom GenomeInfoDb keepStandardChromosomes Seqinfo dropSeqlevels seqlevels keepSeqlevels seqlevels<- seqinfo<- seqnames seqnames<-
-#' @importFrom GenomicRanges tileGenome reduce granges findOverlaps width pintersect mcols mcols<- start end start<- end<- split gaps strand promoters
+#' @importFrom GenomicRanges tileGenome reduce granges findOverlaps width pintersect mcols mcols<- start end start<- end<- split gaps strand promoters GRangesList
 #' @importFrom S4Vectors queryHits subjectHits DataFrame %in% endoapply
 #' @importFrom IRanges %over% 
 #' @importFrom data.table data.table setkey as.data.table fread fwrite setDT rbindlist dcast.data.table copy melt :=
