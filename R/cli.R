@@ -19,7 +19,7 @@ basic <- function() {
                               help="Genome Somatic VCF file"),
         optparse::make_option(c("-e", "--evcf"), type="character",
                               default=NULL,
-                              help="Exome Somatic VCF file"),
+                              help="Target Somatic VCF file"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default="cnvex.rds",
                               help="Output file")
@@ -35,7 +35,7 @@ basic <- function() {
       )
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
-    args$vcf <- c(args$gvcf, args$evcf)
+    args$vcf <- c(genome=args$gvcf, target=args$evcf)
     
     config <- resolveConfig(args$config)
     if (config=="") {
