@@ -86,9 +86,9 @@ addCorrections <- function(cnv, opts) {
 
 #' @export
 importCNVEX <- function(vcf, t.bam, n.bam, opts) {
+    var <- importVcf(vcf, opts)
     tile <- getTile(opts)
     tile <- rawLogRatio(t.bam, n.bam, tile, opts)
-    var <- importVcf(vcf, opts)
     cnv <- list(var=var, tile=tile)
     cnv <- addGene(cnv, opts)
     return(cnv)
