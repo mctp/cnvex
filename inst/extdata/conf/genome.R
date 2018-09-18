@@ -20,6 +20,7 @@ OPTS <- list(
     lr.loc.tileflank=5,
 
     #### BAF
+    baf.max.eff.dp=300,
     baf.min.t.dp=12,
     baf.min.n.dp=0,
     baf.het.range=c(0.3, 0.7),
