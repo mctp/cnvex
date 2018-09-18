@@ -61,12 +61,11 @@
 }
 
 .filterGermlineHets <- function(tile, var, opts) {
-    if (opts$target=="genome") {
-        snp.filter.fun <- .filterGenomeGermlineHets
-    } else {
-        snp.filter.fun <- .filterTargetGermlineHets
-    }
-    germline <- snp.filter.fun(tile, var, opts)
+    var.genome <- var[var$SOURCE=="genome"]
+    germline.genome <- .filterGenomeGermlineHets(tile, var.genome, opts)
+    var.target <- var[var$SOURCE=="target"]
+    germline.target <- .filterTargetGermlineHets(tile, var.target, opts)
+    germline <- ifelse(var$SOURCE=="genome", germline.genome, germline.target)
     return(germline)
 }
 
@@ -89,8 +88,16 @@
     )
     setkey(tmp, idx)
     tmp <- tmp[J(1:length(gt))]
-    tmp <- tmp[,.(baf=sum(bad)/sum(depth)),by=idx]
+    tmp <- tmp[,.(
+        baf=sum(bad)/sum(depth),
+        depth=sum(depth)
+    ), by=idx]
+    tmp <- tmp[,":="(
+        ## weight proportional to inverse varince ~ 1/sqrt(n)
+        baf.weight = 1/sqrt(0.25/pmin(pmax(1, depth), opts$baf.max.eff.dp))
+    )]
     gt$baf <- tmp$baf
+    gt$baf.weight <- tmp$baf.weight
     gt$baf <- .smooth.outliers.gr(gt, "baf")
     return(gt)
 }
