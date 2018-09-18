@@ -53,7 +53,12 @@
 importVcf <- function(vcf, opts) {
     ## import
     if (opts$caller=="vardict") {
-        var <- unlist(GRangesList(lapply(args$vcf, function(fn) .importVarDict(fn, opts))))
+        var <- unlist(GRangesList(unname(lapply(names(vcf), function(name) {
+            fn <- vcf[[name]]
+            v <- .importVarDict(fn, opts)
+            mcols(v)$SOURCE <- name
+            return(v)
+        }))))
     } else {
         stop("Variant caller not supported.")
     }
