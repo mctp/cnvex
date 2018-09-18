@@ -5,6 +5,8 @@
 .runJointSeg <- function(arm, method, tile.width, len.min, cbs.lr, cbs.baf, rbs.selection, only.target) {
     arm.lr <- arm$lr.smooth
     arm.baf <- arm$baf
+    arm.baf.weight <- arm$baf.weight
+    arm.baf.weight[is.na(arm.baf.weight)] <- 1.0
     if (only.target) {
         arm.lr[!arm$target] <- NA_real_
         arm.baf[!arm$target] <- NA_real_
@@ -23,8 +25,8 @@
             seg0 <- suppressWarnings(sort(unique(jointSeg(
                 cbind(arm.lr, arm.baf), method=method, modelSelectionMethod=rbs.selection, K=opt.K)$bestBkp)))
         } else if (method=="CBS") {
-            seg0.lr <- .runCBS(arm.lr, cbs.lr)
-            seg0.baf <- .runCBS(arm.baf, cbs.baf)
+            seg0.lr <- .runCBS(arm.lr, args=cbs.lr)
+            seg0.baf <- .runCBS(arm.baf, arm.baf.weight, args=cbs.baf)
             seg0 <- unique(sort(c(seg0.lr, seg0.baf)))
         } else {
             stop("Joint segmentation method not supported.")

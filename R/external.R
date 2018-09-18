@@ -31,14 +31,18 @@
     return(out)
 }
 
-.runCBS <- function(y, ...) {
+.runCBS <- function(y, y.weights=NULL, args) {
     n <- length(y)
     chrom <- rep(1, n)
     maploc <- 1:n
     genomdat <- y
     cna <- DNAcopy::CNA(genomdat, chrom, maploc)
     ## this is crazy
-    inp <- c(list(cna), list(...)[[1]])
+    if (!is.null(y.weights)) {
+        inp <- c(list(cna, weights=y.weights), args)
+    } else {
+        inp <- c(list(cna), args)
+    }
     capture.output(
         res <- do.call(DNAcopy::segment, inp)
     )
