@@ -21,10 +21,10 @@ OPTS <- list(
 
     #### BAF
     baf.max.eff.dp=300,
-    baf.min.t.dp=36,
-    baf.min.n.dp=20,
     baf.het.range=c(0.3, 0.7),
-    baf.qual.min=0.25,
+    baf.min.het.dp=6,
+    baf.min.target.dp=36,
+    baf.min.genome.dp=12,
 
     #### segmentation
     seg.strategy="joint",
