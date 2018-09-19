@@ -21,8 +21,14 @@ addPoolCoverage <- function(pool, cnv, opts) {
 }
 
 #' @export
-addCorrectLogRatio <- function(cnv, opts) {
-    cnv$tile$lr.gc <- .correctGC(cnv$tile, opts)
+addRawLogRatio <- function(cnv, opts) {
+    cnv$tile$lr.raw <- .rawLogRatio(cnv$tile$t.cov, cnv$tile$n.cov, opts)
+    return(cnv)
+}
+
+#' @export
+addGcLogRatio <- function(cnv, opts) {
+    cnv$tile$lr.gc <- .gcLogRatio(cnv$tile$lr.raw, cnv$tile, opts)
     return(cnv)
 }
 
@@ -31,10 +37,17 @@ addSmoothLogRatio <- function(cnv, opts) {
     cnv$tile$lr.smooth <- cnv$tile$lr.gc
     if (opts$lr.smooth=="hybrid") {
         ## hybrid smooth only on targeted
-        cnv$tile$lr.smooth[cnv$tile$target] <- .smoothLogRatio(cnv$tile[cnv$tile$target], opts)
+        cnv$tile$lr.smooth[cnv$tile$target] <-
+            .smoothLogRatio(cnv$tile[cnv$tile$target]$lr.smooth, cnv$tile[cnv$tile$target], opts)
     } else if (opts$lr.smooth=="outlier") {
-        cnv$tile$lr.smooth <- .smoothOutliers(cnv$tile, opts)
+        cnv$tile$lr.smooth <- .smoothOutliers(cnv$tile$lr.smooth, cnv$tile, opts)
     }
+    return(cnv)
+}
+
+#' @export
+addBaf <- function(cnv, opts) {
+    cnv$tile <- .getBaf(cnv$tile, cnv$var, opts)
     return(cnv)
 }
 
@@ -60,13 +73,6 @@ addJointSegment <- function(cnv, opts) {
     cnv$gene$seg[hit$queryHits] <- hit$subjectHits
     return(cnv)
 }
-
-#' @export
-addBaf <- function(cnv, opts) {
-    cnv$tile <- .getBaf(cnv$tile, cnv$var, opts)
-    return(cnv)
-}
-
 
 #' @export
 addCopy <- function(cnv, opts) {
@@ -100,18 +106,26 @@ addGene <- function(cnv, opts) {
 }
 
 #' @export
-addCorrections <- function(cnv, opts) {
-    cnv <- addCorrectLogRatio(cnv, opts)
+importCNVEX <- function(vcf, t.bam, n.bam, opts) {
+    var <- importVcf(vcf, opts)
+    tile <- getTile(opts)
+    cnv <- list(var=var, tile=tile)
+    cnv <- addGene(cnv, opts)
+    cnv <- addCoverage(t.bam, n.bam, cnv, opts)
+    return(cnv)
+}
+
+#' @export
+addLogRatio <- function(cnv, opts) {
+    cnv <- addRawLogRatio(cnv, opts)
+    cnv <- addGcLogRatio(cnv, opts)
     cnv <- addSmoothLogRatio(cnv, opts)
     return(cnv)
 }
 
 #' @export
-importCNVEX <- function(vcf, t.bam, n.bam, opts) {
-    var <- importVcf(vcf, opts)
-    tile <- getTile(opts)
-    cnv <- list(var=var, tile=tile)
-    cnv <- addCoverage(t.bam, n.bam, cnv, opts)
-    cnv <- addGene(cnv, opts)
+addSegment <- function(cnv, opts) {
+    cnv <- addBaf(cnv, opts)
+    cnv <- addJointSegment(cnv, opts)
     return(cnv)
 }

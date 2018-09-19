@@ -1,16 +1,3 @@
-## .normCoverage <- function(t.cov, n.cov, gt, opts) {
-##     mx.cov <- cbind(t.cov, n.cov)*width(gt)
-##     mx.cov.tar <- mx.cov[ gt$target,]
-##     mx.cov.tar <- t(t(mx.cov.tar)/(colSums(mx.cov.tar)/1e6))
-##     mx.cov.tar <- 1000*mx.cov.tar/width(gt[ gt$target])
-##     mx.cov.off <- mx.cov[!gt$target,]
-##     mx.cov.off <- t(t(mx.cov.off)/(colSums(mx.cov.off)/1e6))
-##     mx.cov.off <- 1000*mx.cov.off/width(gt[!gt$target])
-##     mx.cov[ gt$target,] <- mx.cov.tar
-##     mx.cov[!gt$target,] <- mx.cov.off
-##     return(mx.cov)
-## }
-
 .normCoverage <- function(cov, gt, opts) {
     ## normalized coverage
     cov.n <- cov*width(gt)
@@ -22,26 +9,29 @@
     cov.n.off <- 1000*cov.n.off/width(gt[!gt$target])
     cov.n[ gt$target] <- cov.n.tar
     cov.n[!gt$target] <- cov.n.off
-    return(mx.cov)
+    return(cov.n)
 }
 
 .poolCoverage <- function(pool, cnv, opts) {
-    cov <- cnv$tile$t.cov
     sex <- .detect.sex(cnv$var, cnv$tile)
+    pool.sex <- pool$cov[,pool$sex==sex]
     ## rank normals by variance in log2(tumor/normal)
-    lr.pool.mx <- log2(cov/pool)
+    lr.pool.mx <- log2(cnv$tile$t.cov/pool.sex)
     lr.pool.mx <- ifelse(is.finite(lr.pool.mx), lr.pool.mx, NA_real_)
-    lr.pool.mx.sd <- apply(lr.pool.mx, 2, estimateSd)
-    lr.pool.mx.sd.rnk <- order(lr.pool.mx.sd)
+    lr.pool.sd <- apply(lr.pool.mx, 2, estimateSd)
+    lr.pool.rk <- order(lr.pool.mx.sd)
     ## greedy search for k-best normals to pool
-    k <- which.min(sapply(seq_len(min(25, ncol(pool))), function(i) {
-        sel<- lr.pool.mx.sd.rnk[1:i]
-        sel.pool <- pool[,sel,drop=FALSE]
-        lr.pool <- log2(t.cov/rowMedians(sel.pool))
+    k <- which.min(sapply(seq_len(min(25, ncol(pool.sex))), function(i) {
+        n <- lr.pool.rk[1:i]
+        n.pool <- pool.sex[,n,drop=FALSE]
+        n.cov <- .normCoverage(rowMedians(n.pool), cnv$tile, opts)
+        lr.pool <- log2(cnv$tile$t.cov/n.cov)
         lr.pool <- ifelse(is.finite(lr.pool), lr.pool, NA_real_)
         sd.pool <- estimateSd(lr.pool)
     }))
-    p.cov <- rowMedians(pool[,lr.pool.mx.sd.rnk[1:k],drop=FALSE])
-    p.cov <- .normCoverage(p.cov, cnv$tile, opts)
-    return(p.cov)
+    ## compute final log-ratio
+    n <- lr.pool.rk[1:k]
+    n.pool <- pool.sex[,n,drop=FALSE]
+    n.cov <- .normCoverage(rowMedians(n.pool), cnv$tile, opts)
+    return(n.cov)
 }

@@ -104,6 +104,6 @@
     )]
     gt$baf <- tmp$baf
     gt$baf.weight <- tmp$baf.weight
-    gt$baf <- .smooth.outliers.gr(gt, "baf")
+    gt$baf <- .smoothOutliers(gt$baf, gt, opts)
     return(gt)
 }

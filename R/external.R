@@ -52,3 +52,11 @@
     }
     return(bkp)
 }
+
+.runSmooth <- function(lr, gr) {
+    obj <- CNA(lr, as.integer(seqnames(gr)), floor((start(gr)+end(gr))/2),
+               data.type = "logratio",
+               sampleid = "sample")
+    adj <- smooth.CNA(obj)$sample
+    return(adj)
+}

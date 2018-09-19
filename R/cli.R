@@ -1,5 +1,5 @@
 #' @export
-import <- function() {
+load <- function() {
 
     option_list = list(
         optparse::make_option(c("-c", "--config"), type="character",
@@ -101,15 +101,21 @@ pool <- function() {
     }
     tmp <- mclapply(args$args, function(fn) {
         cnv <- readRDS(fn)
-        cnv$tile$n.cov
+        sex <- .detect.sex(cnv$var, cnv$tile)
+        cov <- cnv$tile$n.cov
+        list(sex, cov)
     }, mc.cores=args$options$cores)
-    n.cov.mx <- do.call(cbind, tmp)
-    saveRDS(n.cov.mx, args$options$out)
+    tmp.sex <- lapply(tmp, "[[", 1)
+    tmp.cov <- lapply(tmp, "[[", 2)
+    cov <- do.call(cbind, tmp.cov)
+    sex <- unlist(tmp.sex)
+    pool <- list(cov=cov, sex=sex)
+    saveRDS(pool, args$options$out)
 }
 
 
 #' @export
-adjust <- function() {
+analyze <- function() {
 
     option_list = list(
         
@@ -133,7 +139,7 @@ adjust <- function() {
                               help="Optional file name suffix")
     )
     parser = optparse::OptionParser(
-      "Rscript -e 'cnvex::adjust()' [options]",
+      "Rscript -e 'cnvex::analyze()' [options]",
       description=c("Import data to create CNVEX object.\n"),
       epilogue=c(
           "Written by Marcin Cieslik (mcieslik@med.umich.edu)",
@@ -159,6 +165,7 @@ adjust <- function() {
 
     if (!is.null(args$pool)) {
         if (file.exists(args$pool)) {
+            write("Computing Pool coverage...\n", stderr())
             pool <- readRDS(args$pool)
             cnv <- addPoolCoverage(pool, cnv, opts)
         } else {
@@ -167,75 +174,22 @@ adjust <- function() {
             quit("no", 1)
         }
     }
-
-    cnv <- addCorrections(cnv, opts)
+    
+    write("Computing and correcting coverage-ratio...\n", stderr())
+    cnv <- addLogRatio(cnv, opts)
+    write("Computing segmentation...\n", stderr())
+    cnv <- addSegment(cnv, opts)
+    
     if (is.null(args$out)) {
         if (is.null(args$suffix)) {
-            args$out <- str_replace(args$inp, ".rds$", "-adj.rds")
-        } else {
-            args$out <- str_replace(args$inp, ".rds$", sprintf("-adj-%s.rds", args$suffix))
-        }
-    }
-    saveRDS(cnv, args$out)
-}
-
-#' @export
-segment <- function() {
-
-    option_list = list(
-        
-        optparse::make_option(c("-c", "--config"), type="character",
-                            default="genome",
-                            help="Preset file"),
-        optparse::make_option(c("-p", "--cores"), type="integer",
-                            default=4L,
-                            help="Number of cores"),
-        optparse::make_option(c("-i", "--inp"), type="character",
-                              default=NULL,
-                              help="Input CNVEX file"),
-        optparse::make_option(c("-o", "--out"), type="character",
-                              default=NULL,
-                              help="Output CNVEX file"),
-        optparse::make_option(c("-s", "--suffix"), type="character",
-                              default=NULL,
-                              help="Optional file name suffix")
-    )
-    parser = optparse::OptionParser(
-      "Rscript -e 'cnvex::segment()' [options]",
-      description=c("Import data to create CNVEX object.\n"),
-      epilogue=c(
-          "Written by Marcin Cieslik (mcieslik@med.umich.edu)",
-          "Michigan Center for Translational Pathology (c) 2018\n"),
-      option_list=option_list
-      )
-
-    args <- optparse::parse_args(parser, positional_arguments=FALSE)
-
-    config <- resolveConfig(args$config)
-    if (config=="") {
-        optparse::print_help(parser)
-        write("Config file not found.\n", stderr())
-        quit("no", 1)
-    }
-    opts <- getOpts(config, opts=list(cores=args$cores))
-    if(is.null(args$inp) || !file.exists(args$inp)) {
-        optparse::print_help(parser)
-        write("Input file not found.\n", stderr())
-        quit("no", 1)
-    }
-    cnv <- readRDS(args$inp)
-    
-    cnv <- addBaf(cnv, opts)
-    cnv <- addJointSegment(cnv, opts)
-    if (is.null(args$out)) {
-        if (!is.null(args$suffix)) {
-            args$out <- str_replace(args$inp, ".rds$", sprintf("-seg-%s.rds", args$suffix))
-        } else {
             args$out <- str_replace(args$inp, ".rds$", "-seg.rds")
+        } else {
+            args$out <- str_replace(args$inp, ".rds$", sprintf("-seg-%s.rds", args$suffix))
         }
     }
     saveRDS(cnv, args$out)
 }
+
 
 #' @export
 tocsv <- function() {

@@ -1,5 +1,4 @@
-.correctGC <- function(gt, opts) {
-    lr <- gt$lr.raw
+.correctGC <- function(lr, gt, opts) {
     ## normalize, smooth, and gc-correct
     if (opts$gc.adjust.trend) {
         for (sel in unique(gt$target)) {
@@ -23,5 +22,6 @@
             }
         }
     }
+    lr[!is.finite(lr)] <- NA_real_
     return(lr)
 }
