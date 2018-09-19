@@ -1,4 +1,26 @@
 #' @export
+addCoverage <- function(t.bam, n.bam, cnv, opts) {
+    ## normalize by sequencing depth
+    t.cov <- .runMosdepthTile(t.bam, cnv$tile, opts$cores)
+    t.cov <- .normCoverage(t.cov, cnv$tile, opts)
+    if (!is.null(n.bam)) {
+        n.cov <- .runMosdepthTile(n.bam, cnv$tile, opts$cores)
+        n.cov <- .normCoverage(n.cov, cnv$tile, opts)
+    } else {
+        n.cov <- NA_real_
+    }
+    mcols(cnv$tile) <- cbind(mcols(cnv$tile), cbind(t.cov, n.cov))
+    return(cnv)
+}
+
+#' @export
+addPoolCoverage <- function(pool, cnv, opts) {
+    p.cov <- .poolCoverage(pool, cnv, opts)
+    cnv$tile$n.cov <- p.cov
+    return(cnv)
+}
+
+#' @export
 addCorrectLogRatio <- function(cnv, opts) {
     cnv$tile$lr.gc <- .correctGC(cnv$tile, opts)
     return(cnv)
@@ -88,8 +110,8 @@ addCorrections <- function(cnv, opts) {
 importCNVEX <- function(vcf, t.bam, n.bam, opts) {
     var <- importVcf(vcf, opts)
     tile <- getTile(opts)
-    tile <- rawLogRatio(t.bam, n.bam, tile, opts)
     cnv <- list(var=var, tile=tile)
+    cnv <- addCoverage(t.bam, n.bam, cnv, opts)
     cnv <- addGene(cnv, opts)
     return(cnv)
 }

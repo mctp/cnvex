@@ -1,5 +1,5 @@
 #' @export
-basic <- function() {
+import <- function() {
 
     option_list = list(
         optparse::make_option(c("-c", "--config"), type="character",
@@ -26,7 +26,7 @@ basic <- function() {
         
     )
     parser = optparse::OptionParser(
-      "Rscript -e 'cnvex::basic()' [options]",
+      "Rscript -e 'cnvex::import()' [options]",
       description=c("Import data to create CNVEX object.\n"),
       epilogue=c(
           "Written by Marcin Cieslik (mcieslik@med.umich.edu)",
@@ -62,6 +62,53 @@ basic <- function() {
 }
 
 #' @export
+pool <- function() {
+
+    option_list = list(
+        optparse::make_option(c("-c", "--config"), type="character",
+                              default="genome",
+                              help="Preset file"),
+        optparse::make_option(c("-p", "--cores"), type="integer",
+                              default=4L,
+                              help="Number of cores"),
+        optparse::make_option(c("-o", "--out"), type="character",
+                              default="pool.rds",
+                              help="Output file")
+    )
+    parser = optparse::OptionParser(
+      "Rscript -e 'cnvex::pool()' [options] files",
+      description=c("Create pool of normals CNVEX object.\n"),
+      epilogue=c(
+          "Written by Marcin Cieslik (mcieslik@med.umich.edu)",
+          "Michigan Center for Translational Pathology (c) 2018\n"),
+      option_list=option_list
+      )
+
+    args <- optparse::parse_args(parser, positional_arguments=TRUE)
+
+    config <- resolveConfig(args$options$config)
+    if (config=="") {
+        optparse::print_help(parser)
+        write("Config file not found.\n", stderr())
+        quit("no", 1)
+    }
+    opts <- getOpts(config, opts=list(cores=args$options$cores))
+
+    if (length(args$args) < 2) {
+        optparse::print_help(parser)
+        write("Multiple CNVEX input files required.\n", stderr())
+        quit("no", 1)
+    }
+    tmp <- mclapply(args$args, function(fn) {
+        cnv <- readRDS(fn)
+        cnv$tile$n.cov
+    }, mc.cores=args$options$cores)
+    n.cov.mx <- do.call(cbind, tmp)
+    saveRDS(n.cov.mx, args$options$out)
+}
+
+
+#' @export
 adjust <- function() {
 
     option_list = list(
@@ -75,6 +122,9 @@ adjust <- function() {
         optparse::make_option(c("-i", "--inp"), type="character",
                               default=NULL,
                               help="Input CNVEX file"),
+        optparse::make_option(c("-l", "--pool"), type="character",
+                              default=NULL,
+                              help="Pool of normals"),
         optparse::make_option(c("-o", "--out"), type="character",
                               default=NULL,
                               help="Output CNVEX file"),
@@ -100,12 +150,23 @@ adjust <- function() {
         quit("no", 1)
     }
     opts <- getOpts(config, opts=list(cores=args$cores))
-    if(is.null(args$inp) || !file.exists(args$inp)) {
+    if (is.null(args$inp) || !file.exists(args$inp)) {
         optparse::print_help(parser)
         write("Input file not found.\n", stderr())
         quit("no", 1)
     }
     cnv <- readRDS(args$inp)
+
+    if (!is.null(args$pool)) {
+        if (file.exists(args$pool)) {
+            pool <- readRDS(args$pool)
+            cnv <- addPoolCoverage(pool, cnv, opts)
+        } else {
+            optparse::print_help(parser)
+            write("Pool file not found.\n", stderr())
+            quit("no", 1)
+        }
+    }
 
     cnv <- addCorrections(cnv, opts)
     if (is.null(args$out)) {

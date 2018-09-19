@@ -109,10 +109,15 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov <- cnv$tile
     cov <- cov[seqnames(cov) %in% sel.chr]
 
+    if (length(unique(snp$SOURCE))==1) {
+        snp$SOURCE <- "genome"
+    }
+    
     snp.dt <- data.table(
         chr=as.character(seqnames(snp)),
         pos=start(snp),
         val=snp$t.AF,
+        src=snp$SOURCE,
         seg=snp$seg,
         type="BAF"
     )[!is.na(val)]
@@ -129,7 +134,7 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov.dt[,chr:=factor(chr, sel.chr, ordered=TRUE)]
     cov.dt <- cov.dt[-c(1,nrow(cov.dt))][order(-tgt)]
     ## fix
-    snp.dt <- rbind(snp.dt, cov.dt[,.SD[1],by=chr][,.(chr, pos, val=0.5, seg=0, type="BAF")])
+    snp.dt <- rbind(snp.dt, cov.dt[,.SD[1],by=chr][,.(chr, pos, val=0.5, src="genome", seg=0, type="BAF")])
     cov.dt <- rbind(cov.dt, snp.dt[,.SD[1],by=chr][,.(chr, pos, val=0.0, seg=0, type="COV", tgt=TRUE)])
 
     ## COV
@@ -164,7 +169,8 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
         facet_grid(.~chr, scales="free_x") +
         aes(x=pos, y=val, color=factor(as.integer(seg%%3))) +
         coord_cartesian(ylim=c(0,1)) +
-        geom_point(size=p.size, alpha=p.alpha, shape=16) +
+        geom_point(data=snp.dt[src=="genome"], size=p.size, shape=16) +
+        geom_point(data=snp.dt[src=="target"], color="black", size=p.size, shape=16) +
         scale_color_npg(guide=FALSE) +
         theme_pubr() +
         ylab("BAF") +
