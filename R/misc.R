@@ -12,6 +12,15 @@
     log(sum(exp(x - offset))) + offset
 }
 
+.dtRound <- function(dt) {
+    for (i in names(dt)) {
+        if (class(dt[,get(i)])=="numeric") {
+            dt[,":="((i), round(get(i), 6))]
+        }
+    }
+    return(dt)
+}
+
 max.na.rm <- function(x) max(x, na.rm=TRUE)
 
 merge.list <- function (x, y) {
@@ -31,26 +40,3 @@ merge.list <- function (x, y) {
     return(abd)
 }
 
-
-resolveConfig <- function(config) {
-    if (!file.exists(config)) {
-        config <- system.file(sprintf("extdata/conf/%s.R", config), package="cnvex")
-    }
-    return(config)
-}
-
-getOpts <- function(conf.fn, opts=list()) {
-    ENV = new.env(parent = .BaseNamespaceEnv)
-    source(conf.fn, local=ENV)
-    opts <- merge.list(opts, ENV$OPTS)
-    return(opts)
-}
-
-.dtRound <- function(dt) {
-    for (i in names(dt)) {
-        if (class(dt[,get(i)])=="numeric") {
-            dt[,":="((i), round(get(i), 6))]
-        }
-    }
-    return(dt)
-}

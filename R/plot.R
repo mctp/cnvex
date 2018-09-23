@@ -142,8 +142,7 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov.plt <- ggplot(cov.dt) +
         facet_grid(.~chr, scales="free_x") +
         aes(x=pos, y=val, color=factor(ifelse(!tgt,4,as.integer(seg%%3)))) +
-        coord_cartesian(ylim=c(min(-3, min(cov.dt$val, na.rm=TRUE)),
-                               max (3, max(cov.dt$val, na.rm=TRUE)))) +
+        coord_cartesian(ylim=c(-3,3)) +
         scale_color_npg(guide=FALSE) +        
         geom_point(size=0.75, alpha=0.5, shape=16) +
         geom_hline(yintercept = 0, color="blue") +

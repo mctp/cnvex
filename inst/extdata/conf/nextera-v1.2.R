@@ -1,5 +1,5 @@
 OPTS <- list(
-    #### basic
+    ## basic
     cores=4,
     sample=c(1,2),
     target="nextera-v1.2",
@@ -16,19 +16,29 @@ OPTS <- list(
 
     ## log-ratio
     lr.smooth="outlier",
-    lr.smooth.window=13,
-    lr.loc.tileflank=NA_integer_,
+    lr.smooth.window=21,
+    lr.loc.tileflank=5,
 
-    #### segmentation
+    ## BAF
+    baf.max.eff.dp=300,
+    baf.het.range=c(0.3, 0.7),
+    baf.min.het.dp=6,
+    baf.min.target.dp=24,
+    baf.min.genome.dp=12,
+
+    ## segmentation
     seg.strategy="joint",
-    seg.method="RBS",
+    seg.method="CBS",
     seg.sd.prune=TRUE,
     seg.sd.lr.penalty=1,
     seg.sd.baf.penalty=1,
-    seg.local.sd=FALSE,
-    seg.min.tile=3,
+    seg.len.prune=TRUE,
+    seg.len.min=2,
+    seg.cbs.baf=list(alpha=0.01, trim=0.025, min.width=2),
+    seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=2),
+    seg.rbs.selection="Lebarbier",
 
-    #### GC-content
+    ## GC-content
     gc.adjust.trend=TRUE,
     gc.adjust.offset=TRUE,
     gc.adjust.span.on=0.15,
@@ -36,14 +46,23 @@ OPTS <- list(
     gc.adjust.on=c(0.3, 0.7),
     gc.adjust.off=c(0.0, 1.0),
 
-    #### optimization
-    grid.n=64,
-    p.lo=0.05,
-    p.hi=0.95,
-    D.lo=1,
-    D.hi=6,
-    max.C=9,
-    max.sC=20,
-    max.len.per.probe=1e6,
-    res=0.1
+    ## pool
+    pool.method="pca",
+    pool.lo.cov=0.20,
+    pool.hi.cov=5,
+    pool.hi.zero=0.25,
+    pool.sd.out=3,
+
+    ## optimization
+    opt.local.sd=FALSE,
+    opt.grid.n=64,
+    opt.p.lo=0.05,
+    opt.p.hi=0.95,
+    opt.D.lo=1,
+    opt.D.hi=6,
+    opt.max.C=9,
+    opt.max.sC=20,
+    opt.max.len.per.probe=1e6,
+    opt.res=0.1
+
 )

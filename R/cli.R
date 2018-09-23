@@ -99,17 +99,10 @@ pool <- function() {
         write("Multiple CNVEX input files required.\n", stderr())
         quit("no", 1)
     }
-    tmp <- mclapply(args$args, function(fn) {
-        cnv <- readRDS(fn)
-        sex <- .detect.sex(cnv$var, cnv$tile)
-        cov <- cnv$tile$n.cov
-        list(sex, cov)
-    }, mc.cores=args$options$cores)
-    tmp.sex <- lapply(tmp, "[[", 1)
-    tmp.cov <- lapply(tmp, "[[", 2)
-    cov <- do.call(cbind, tmp.cov)
-    sex <- unlist(tmp.sex)
-    pool <- list(cov=cov, sex=sex)
+
+    pd <- importPoolData(args$args, opts)
+    pool <- createPool(pd, opts)
+
     saveRDS(pool, args$options$out)
 }
 
@@ -165,7 +158,7 @@ analyze <- function() {
 
     if (!is.null(args$pool)) {
         if (file.exists(args$pool)) {
-            write("Computing Pool coverage...\n", stderr())
+            write("Computing Pool coverage...", stderr())
             pool <- readRDS(args$pool)
             cnv <- addPoolCoverage(pool, cnv, opts)
         } else {
@@ -175,16 +168,16 @@ analyze <- function() {
         }
     }
     
-    write("Computing and correcting coverage-ratio...\n", stderr())
+    write("Computing and correcting coverage-ratio...", stderr())
     cnv <- addLogRatio(cnv, opts)
-    write("Computing segmentation...\n", stderr())
+    write("Computing segmentation...", stderr())
     cnv <- addSegment(cnv, opts)
     
     if (is.null(args$out)) {
         if (is.null(args$suffix)) {
             args$out <- str_replace(args$inp, ".rds$", "-seg.rds")
         } else {
-            args$out <- str_replace(args$inp, ".rds$", sprintf("-seg-%s.rds", args$suffix))
+            args$out <- str_replace(args$inp, ".rds$", sprintf("-%s-seg.rds", args$suffix))
         }
     }
     saveRDS(cnv, args$out)

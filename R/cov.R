@@ -19,7 +19,7 @@
     lr.pool.mx <- log2(cnv$tile$t.cov/pool.sex)
     lr.pool.mx <- ifelse(is.finite(lr.pool.mx), lr.pool.mx, NA_real_)
     lr.pool.sd <- apply(lr.pool.mx, 2, estimateSd)
-    lr.pool.rk <- order(lr.pool.mx.sd)
+    lr.pool.rk <- order(lr.pool.sd)
     ## greedy search for k-best normals to pool
     k <- which.min(sapply(seq_len(min(25, ncol(pool.sex))), function(i) {
         n <- lr.pool.rk[1:i]

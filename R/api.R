@@ -129,3 +129,40 @@ addSegment <- function(cnv, opts) {
     cnv <- addJointSegment(cnv, opts)
     return(cnv)
 }
+
+#' @export
+resolveConfig <- function(config) {
+    if (!file.exists(config)) {
+        config <- system.file(sprintf("extdata/conf/%s.R", config), package="cnvex")
+    }
+    return(config)
+}
+
+#' @export
+getOpts <- function(conf.fn, opts=list()) {
+    ENV = new.env(parent = .BaseNamespaceEnv)
+    source(conf.fn, local=ENV)
+    opts <- merge.list(opts, ENV$OPTS)
+    return(opts)
+}
+
+
+#' @export
+importPoolData <- function(cnv.fns, opts) {
+    cnvs <- mclapply(cnv.fns, function(fn) {
+        cnv <- readRDS(fn)
+    }, mc.cores=opts$cores)
+    sex <- sapply(cnvs, function(cnv) .detect.sex(cnv$var, cnv$tile))
+    covs <- do.call(cbind, lapply(cnvs, function(cnv) cnv$tile$n.cov))
+    pd <- list(cov=cov, sex=sex, target=cnvs[[1]]$tile$target)
+    return(pd)
+}
+
+#' @export
+createPool <- function(pd, opts) {
+    pool <- list(
+          male=.createPool(pd$cov[,pd$sex==  "male"], pd$target, opts),
+        female=.createPool(pd$cov[,pd$sex=="female"], pd$target, opts)
+    )
+    return(pool)
+}

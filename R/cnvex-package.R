@@ -4,6 +4,7 @@
 #' @docType package
 #' @importFrom parallel mclapply detectCores
 #' @importFrom rtracklayer import export
+#' @importFrom matrixStats rowMeans rowMedians rowMads rowMins rowMaxs
 #' @importFrom Rsamtools BamFile
 #' @importFrom BSgenome.Hsapiens.UCSC.hg38 BSgenome.Hsapiens.UCSC.hg38
 #' @importFrom GenomeInfoDb keepStandardChromosomes Seqinfo dropSeqlevels seqlevels keepSeqlevels seqlevels<- seqinfo<- seqnames seqnames<-

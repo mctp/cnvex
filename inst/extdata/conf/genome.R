@@ -1,5 +1,5 @@
 OPTS <- list(
-    #### basic
+    ## basic
     cores=4,
     sample=c(1,2),
     target="genome",
@@ -19,14 +19,14 @@ OPTS <- list(
     lr.smooth.window=21,
     lr.loc.tileflank=5,
 
-    #### BAF
+    ## BAF
     baf.max.eff.dp=300,
     baf.het.range=c(0.3, 0.7),
     baf.min.het.dp=6,
     baf.min.target.dp=24,
     baf.min.genome.dp=12,
 
-    #### segmentation
+    ## segmentation
     seg.strategy="joint",
     seg.method="CBS",
     seg.sd.prune=TRUE,
@@ -38,7 +38,7 @@ OPTS <- list(
     seg.cbs.lr=list(alpha=0.01, trim=0.025, min.width=2),
     seg.rbs.selection="Lebarbier",
     
-    #### GC-content
+    ## GC-content
     gc.adjust.trend=TRUE,
     gc.adjust.offset=TRUE,
     gc.adjust.span.on=0.5,
@@ -46,7 +46,14 @@ OPTS <- list(
     gc.adjust.on=c(0.3, 0.7),
     gc.adjust.off=c(NA_real_, NA_real_),
 
-    #### optimization
+    ## pool
+    pool.method="svd",
+    pool.lo.cov=0.20,
+    pool.hi.cov=5,
+    pool.hi.zero=0.25,
+    pool.sd.out=3,
+
+    ## optimization
     opt.local.sd=FALSE,
     opt.grid.n=64,
     opt.p.lo=0.05,
