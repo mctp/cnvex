@@ -48,10 +48,11 @@ OPTS <- list(
 
     ## pool
     pool.method="pca",
-    pool.lo.cov=0.20,
-    pool.hi.cov=5,
-    pool.hi.zero=0.25,
+    pool.lo.cov=0.25,
+    pool.hi.cov=4,
+    pool.hi.zero=0.20,
     pool.sd.out=3,
+    pool.n.comp=20,
 
     ## optimization
     opt.local.sd=FALSE,

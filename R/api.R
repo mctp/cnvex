@@ -14,14 +14,20 @@ addCoverage <- function(t.bam, n.bam, cnv, opts) {
 }
 
 #' @export
-addPoolCoverage <- function(pool, cnv, opts) {
-    p.cov <- .poolCoverage(pool, cnv, opts)
-    cnv$tile$n.cov <- p.cov
+addFakeLogRatio <- function(cnv, pool, opts) {
+    p.cov <- .poolFakeCoverage(cnv, pool, opts)
+    cnv$tile$lr.raw <- .rawLogRatio(cnv$tile$t.cov, p.cov, opts)
     return(cnv)
 }
 
 #' @export
-addRawLogRatio <- function(cnv, opts) {
+addPcaLogRatio <- function(cnv, pool, opts) {
+    cnv$tile$lr.raw <- .poolPcaDenoise(cnv, pool, opts)
+    return(cnv)
+}
+
+#' @export
+addPairLogRatio <- function(cnv, opts) {
     cnv$tile$lr.raw <- .rawLogRatio(cnv$tile$t.cov, cnv$tile$n.cov, opts)
     return(cnv)
 }
@@ -116,8 +122,16 @@ importCNVEX <- function(vcf, t.bam, n.bam, opts) {
 }
 
 #' @export
-addLogRatio <- function(cnv, opts) {
-    cnv <- addRawLogRatio(cnv, opts)
+addLogRatio <- function(cnv, pool, opts) {
+    if (opts$pool.method=="fake") {
+        cnv <- addFakeLogRatio(cnv, pool, opts)
+    }
+    if (opts$pool.method=="pca") {
+        cnv <- addPcaLogRatio(cnv, pool, opts)
+    }
+    if (opts$pool.method=="none") {
+        cnv <- addPairLogRatio(cnv, opts)
+    }
     cnv <- addGcLogRatio(cnv, opts)
     cnv <- addSmoothLogRatio(cnv, opts)
     return(cnv)
@@ -146,23 +160,9 @@ getOpts <- function(conf.fn, opts=list()) {
     return(opts)
 }
 
-
 #' @export
-importPoolData <- function(cnv.fns, opts) {
-    cnvs <- mclapply(cnv.fns, function(fn) {
-        cnv <- readRDS(fn)
-    }, mc.cores=opts$cores)
-    sex <- sapply(cnvs, function(cnv) .detect.sex(cnv$var, cnv$tile))
-    covs <- do.call(cbind, lapply(cnvs, function(cnv) cnv$tile$n.cov))
-    pd <- list(cov=cov, sex=sex, target=cnvs[[1]]$tile$target)
-    return(pd)
-}
-
-#' @export
-createPool <- function(pd, opts) {
-    pool <- list(
-          male=.createPool(pd$cov[,pd$sex==  "male"], pd$target, opts),
-        female=.createPool(pd$cov[,pd$sex=="female"], pd$target, opts)
-    )
+createPool <- function(cnv.fns, opts) {
+    pool.data <- .importPoolData(cnv.fns, opts)
+    pool <- .createPool(pool.data, opts)
     return(pool)
 }

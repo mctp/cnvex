@@ -99,10 +99,7 @@ pool <- function() {
         write("Multiple CNVEX input files required.\n", stderr())
         quit("no", 1)
     }
-
-    pd <- importPoolData(args$args, opts)
-    pool <- createPool(pd, opts)
-
+    pool <- createPool(args$args, opts)
     saveRDS(pool, args$options$out)
 }
 
@@ -158,18 +155,19 @@ analyze <- function() {
 
     if (!is.null(args$pool)) {
         if (file.exists(args$pool)) {
-            write("Computing Pool coverage...", stderr())
+            write("Importing pool ...", stderr())
             pool <- readRDS(args$pool)
-            cnv <- addPoolCoverage(pool, cnv, opts)
         } else {
             optparse::print_help(parser)
             write("Pool file not found.\n", stderr())
             quit("no", 1)
         }
+    } else {
+        pool <- NULL
     }
     
     write("Computing and correcting coverage-ratio...", stderr())
-    cnv <- addLogRatio(cnv, opts)
+    cnv <- addLogRatio(cnv, pool, opts)
     write("Computing segmentation...", stderr())
     cnv <- addSegment(cnv, opts)
     

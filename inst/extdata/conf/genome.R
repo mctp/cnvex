@@ -52,6 +52,7 @@ OPTS <- list(
     pool.hi.cov=5,
     pool.hi.zero=0.25,
     pool.sd.out=3,
+    pool.pca.k=10,
 
     ## optimization
     opt.local.sd=FALSE,
