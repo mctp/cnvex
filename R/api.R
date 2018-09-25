@@ -27,6 +27,12 @@ addPcaLogRatio <- function(cnv, pool, opts) {
 }
 
 #' @export
+addIcaLogRatio <- function(cnv, pool, opts) {
+    cnv$tile$lr.raw <- .poolIcaDenoise(cnv, pool, opts)
+    return(cnv)
+}
+
+#' @export
 addPairLogRatio <- function(cnv, opts) {
     cnv$tile$lr.raw <- .rawLogRatio(cnv$tile$t.cov, cnv$tile$n.cov, opts)
     return(cnv)
@@ -123,14 +129,18 @@ importCNVEX <- function(vcf, t.bam, n.bam, opts) {
 
 #' @export
 addLogRatio <- function(cnv, pool, opts) {
-    if (opts$pool.method=="fake") {
-        cnv <- addFakeLogRatio(cnv, pool, opts)
-    }
-    if (opts$pool.method=="pca") {
-        cnv <- addPcaLogRatio(cnv, pool, opts)
-    }
-    if (opts$pool.method=="none") {
+    if (is.null(pool)) {
         cnv <- addPairLogRatio(cnv, opts)
+    } else {
+        if (pool$method=="fake") {
+            cnv <- addFakeLogRatio(cnv, pool, opts)
+        }
+        else if (pool$method=="pca") {
+            cnv <- addPcaLogRatio(cnv, pool, opts)
+        }
+        else if (pool$method=="ica") {
+            cnv <- addIcaLogRatio(cnv, pool, opts)
+        }
     }
     cnv <- addGcLogRatio(cnv, opts)
     cnv <- addSmoothLogRatio(cnv, opts)

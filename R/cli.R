@@ -99,6 +99,7 @@ pool <- function() {
         write("Multiple CNVEX input files required.\n", stderr())
         quit("no", 1)
     }
+    
     pool <- createPool(args$args, opts)
     saveRDS(pool, args$options$out)
 }

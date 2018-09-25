@@ -21,4 +21,6 @@
 #' @importFrom jointseg jointSeg estimateSd
 #' @importFrom raster raster focal Which
 #' @importFrom robfilter hybrid.filter
+#' @importFrom fastICA fastICA
+#' @importFrom MASS ginv
 NULL

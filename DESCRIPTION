@@ -12,4 +12,4 @@ Imports: optparse, parallel, rtracklayer, Rsamtools,
         BSgenome.Hsapiens.UCSC.hg38, GenomeInfoDb, GenomicRanges,
         S4Vectors, IRanges, data.table, stringr, Biostrings,
         VariantAnnotation, limma, DNAcopy, DelayedArray, jointseg,
-        raster, robfilter
+        raster, robfilter, fastICA, MASS

@@ -62,6 +62,15 @@
     return(cov)
 }
 
+.fixLogRatioBounds <- function(xsr) {
+    xsrm <- max(min(xsr[is.finite(xsr)]), -4)
+    xsrx <- min(max(xsr[is.finite(xsr)]),  4)
+    xsr[is.nan(xsr)] <- 0    ## 0 / 0
+    xsr[xsr < xsrm] <-  xsrm ## 0 / x
+    xsr[xsr > xsrx] <-  xsrx ## x / 0
+    return(xsr)
+}
+
 .medianLogRatioSel <- function(xs, sex, sex.chr) {
     xsr <- xs
     ## autosomes
@@ -76,11 +85,7 @@
     xsfm <- rowMedians(xsf)
     xsr[sex.chr,sex=="female"] <- log2(xsf/xsfm)
     ## fix bounds
-    xsrm <- max(min(xsr[is.finite(xsr)]), -4)
-    xsrx <- min(max(xsr[is.finite(xsr)]),  4)
-    xsr[is.nan(xsr)] <- 0    ## 0 / 0
-    xsr[xsr < xsrm] <-  xsrm ## 0 / x
-    xsr[xsr > xsrx] <-  xsrx ## x / 0
+    xsr <- .fixLogRatioBounds(xsr)
     return(xsr)
 }
 
@@ -119,41 +124,37 @@
     cov <- .outlierMask(pd$cov, pd$sex, filter, opts$pool.sd.out)
     lr <- .medianLogRatio(cov, pd$target, filter, pd$sex, pd$sex.chr)
     mc <- .medianCoverage(cov, pd$sex, pd$sex.chr)
+    ## 
     if (opts$pool.method=="pca") {
         p <- svd(lr[filter,])$u
-    }
-    if (opts$pool.method=="ica") {
-        p <- fastICA(lr[filter,], 40, method="C")$S
+    } else if (opts$pool.method=="ica") {
+        p <- fastICA(lr[filter,], opts$pool.n.comp, method="C")$S
+    } else {
+        p <- NULL
     }
     pool <- list(method=opts$pool.method, sex=pd$sex, target=pd$target, sex.chr=pd$sex.chr,
                  cov=cov, cov.med=mc, projection=p, filter=filter)
     return(pool)
 }
 
-.fixLogRatio <- function(lr, filter, opts) {
-    lr[!filter] <- NA_real_
-    rf <- lr[filter]
-    rf[is.nan(rf)] <- 0 ## 0 / 0
-    rf[rf < -4] <- -4 ## 0 / x
-    rf[rf >  4] <-  4 ## x / 0
-    return(rf)
-}
 
 .poolIcaDenoise <- function(cnv, pool, opts) {
     sex <- .detect.sex(cnv$var, cnv$tile)
-    lr <- log2(cnv$tile$t.cov / pool$cov.med[,sex])
-    rf <- .fixLogRatio(lr, pool$filter, opts)
     S <- pool$projection[,seq(1,opts$pool.n.comp)]
-    lr[pool$filter] <- rf - as.vector(tcrossprod(rf %*% t(ginv(S)), S))
+    lr <- log2(cnv$tile$t.cov / pool$cov.med[,sex])
+    x <- .fixLogRatioBounds(lr[pool$filter])
+    lr[ pool$filter] <- x - as.vector(tcrossprod(x %*% t(ginv(S)), S))
+    lr[!pool$filter] <- NA_real_
     return(lr)
 }
 
 .poolPcaDenoise <- function(cnv, pool, opts) {
     sex <- .detect.sex(cnv$var, cnv$tile)
-    lr <- log2(cnv$tile$t.cov / pool$cov.med[,sex])
-    rf <- .fixLogRatio(lr, pool$filter, opts)
     P <- pool$projection[,seq(1,opts$pool.n.comp)]
-    lr[pool$filter] <- rf - as.vector(tcrossprod(rf %*% P, P))
+    lr <- log2(cnv$tile$t.cov / pool$cov.med[,sex])
+    x <- .fixLogRatioBounds(lr[pool$filter])
+    lr[ pool$filter] <- x - as.vector(tcrossprod(x %*% P, P))
+    lr[!pool$filter] <- NA_real_
     return(lr)
 }
 
