@@ -47,9 +47,9 @@ OPTS <- list(
     gc.adjust.off=c(NA_real_, NA_real_),
 
     ## pool
-    pool.method="svd",
-    pool.lo.cov=0.20,
-    pool.hi.cov=5,
+    pool.method="pca",
+    pool.lo.cov=0.25,
+    pool.hi.cov=4,
     pool.hi.zero=0.25,
     pool.sd.out=3,
     pool.pca.k=10,

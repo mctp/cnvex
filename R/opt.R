@@ -4,7 +4,7 @@ covData <- function(cnv, opts) {
     segs <- cnv$seg
     tmp <- data.table(
         seg=tile$seg,
-        lr=tile$lr.smooth,
+        lr=tile$lr,
         nC=tile$nC
     )
     ##

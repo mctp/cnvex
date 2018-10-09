@@ -73,7 +73,7 @@ addBaf <- function(cnv, opts) {
 #' @export
 addJointSegment <- function(cnv, opts) {
     ## estimated standard-deviation
-    sd.lr <- estimateSd(cnv$tile$lr.smooth) * opts$seg.sd.lr.penalty
+    sd.lr <- estimateSd(cnv$tile$lr) * opts$seg.sd.lr.penalty
     sd.baf <- estimateSd(cnv$tile$baf) * opts$seg.sd.baf.penalty
     ## create segmentation
     cnv$tile <- .addJointSeg(cnv$tile, sd.lr, sd.baf, opts$seg.method,

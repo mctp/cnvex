@@ -7,8 +7,8 @@
 }
 
 .detect.offset <- function(cnv, opts) {
-    tmp <- as.data.table(mcols(cnv$tile)[,c("seg", "lr.smooth", "baf")])
-    tmp <- tmp[,.(.N, lr=mean(lr.smooth, na.rm=TRUE), baf=mean(baf, na.rm=TRUE)), by=seg]
+    tmp <- as.data.table(mcols(cnv$tile)[,c("seg", "lr", "baf")])
+    tmp <- tmp[,.(.N, lr=mean(lr, na.rm=TRUE), baf=mean(baf, na.rm=TRUE)), by=seg]
     tmp <- tmp[is.finite(lr) & is.finite(baf) & baf>0.38]
     tmp <- tmp[order(lr)][1:(nrow(tmp)%/%2)]
     tmp <- tmp[order(-N)][1:(nrow(tmp)%/%1.5)]

@@ -3,7 +3,7 @@
 }
 
 .runJointSeg <- function(arm, method, tile.width, len.min, cbs.lr, cbs.baf, rbs.selection, only.target) {
-    arm.lr <- arm$lr.smooth
+    arm.lr <- arm$lr
     arm.baf <- arm$baf
     arm.baf.weight <- arm$baf.weight
     arm.baf.weight[is.na(arm.baf.weight)] <- 1.0
@@ -44,7 +44,7 @@
         end0 <- c(seg0, length(arm))
         len0 <- diff(c(0, end0))
         idx0 <- rep(seq_along(beg0), len0)
-        lr0 <- split(arm$lr.smooth, idx0)
+        lr0 <- split(arm$lr, idx0)
         baf0 <- split(arm$baf, idx0)
         stat0 <- data.table(
             seg=seg0,
