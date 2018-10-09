@@ -16,44 +16,51 @@ addCoverage <- function(t.bam, n.bam, cnv, opts) {
 #' @export
 addFakeLogRatio <- function(cnv, pool, opts) {
     p.cov <- .poolFakeCoverage(cnv, pool, opts)
-    cnv$tile$lr.raw <- .rawLogRatio(cnv$tile$t.cov, p.cov, opts)
+    cnv$tile$lr <- .rawLogRatio(cnv$tile$t.cov, p.cov, opts)
     return(cnv)
 }
 
 #' @export
 addPcaLogRatio <- function(cnv, pool, opts) {
-    cnv$tile$lr.raw <- .poolPcaDenoise(cnv, pool, opts)
+    cnv$tile$lr <- .poolPcaDenoise(cnv, pool, opts)
     return(cnv)
 }
 
 #' @export
 addIcaLogRatio <- function(cnv, pool, opts) {
-    cnv$tile$lr.raw <- .poolIcaDenoise(cnv, pool, opts)
+    cnv$tile$lr <- .poolIcaDenoise(cnv, pool, opts)
     return(cnv)
 }
 
 #' @export
 addPairLogRatio <- function(cnv, opts) {
-    cnv$tile$lr.raw <- .rawLogRatio(cnv$tile$t.cov, cnv$tile$n.cov, opts)
+    cnv$tile$lr <- .rawLogRatio(cnv$tile$t.cov, cnv$tile$n.cov, opts)
+    return(cnv)
+}
+
+#' @export
+addScaleLogRatio <- function(cnv, opts) {
+    cnv$tile$lr <- .gcLogRatio(cnv$tile$lr, cnv$tile, opts)
     return(cnv)
 }
 
 #' @export
 addGcLogRatio <- function(cnv, opts) {
-    cnv$tile$lr.gc <- .gcLogRatio(cnv$tile$lr.raw, cnv$tile, opts)
+    cnv$tile$lr <- .scaleLogRatio(cnv$tile$lr, cnv$tile, opts)
     return(cnv)
 }
 
 #' @export
 addSmoothLogRatio <- function(cnv, opts) {
-    cnv$tile$lr.smooth <- cnv$tile$lr.gc
+    lr.smooth <- cnv$tile$lr
     if (opts$lr.smooth=="hybrid") {
         ## hybrid smooth only on targeted
-        cnv$tile$lr.smooth[cnv$tile$target] <-
-            .smoothLogRatio(cnv$tile[cnv$tile$target]$lr.smooth, cnv$tile[cnv$tile$target], opts)
+        lr.smooth[cnv$tile$target] <-
+            .smoothLogRatio(lr.smooth[cnv$tile$target], cnv$tile[cnv$tile$target], opts)
     } else if (opts$lr.smooth=="outlier") {
-        cnv$tile$lr.smooth <- .smoothOutliers(cnv$tile$lr.smooth, cnv$tile, opts)
+        lr.smooth <- .smoothOutliers(lr.smooth, cnv$tile, opts)
     }
+    cnv$tile$lr <- lr.smooth
     return(cnv)
 }
 
@@ -142,6 +149,7 @@ addLogRatio <- function(cnv, pool, opts) {
             cnv <- addIcaLogRatio(cnv, pool, opts)
         }
     }
+    cnv <- addScaleLogRatio(cnv, opts)
     cnv <- addGcLogRatio(cnv, opts)
     cnv <- addSmoothLogRatio(cnv, opts)
     return(cnv)

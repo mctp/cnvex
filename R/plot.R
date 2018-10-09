@@ -1,24 +1,24 @@
-plotGC <- function(cnv) {
-    tmp <- as.data.table(mcols(cnv$tile))
-    tmp <- melt(tmp[,.(gc, blacklist, target, lr.raw, lr.gc, lr.off=lr.raw-lr.gc)], id.vars=c("gc", "blacklist", "target"))
-    tmp[,delta:=FALSE]
-    tmp[variable=="lr.off", delta:=TRUE]
-    tmp[variable=="lr.off", variable:="lr.raw"]
-    tmp[,target.lab:=ifelse(target, "on-target", "off-target")]
-    tmp[,lr.lab:=ifelse(variable=="lr.raw", "raw", "adjusted")]
-    plt <- ggplot(tmp) + aes(x=gc, y=value, color=delta) +
-        facet_grid(lr.lab~target.lab) +
-        geom_point(alpha=0.05, size=0.1) +
-        scale_color_manual(values=c("black", "red"), guide=FALSE) +
-        scale_x_continuous(labels=scales::percent) +
-        coord_cartesian(xlim=c(0.2, 0.8), ylim=c(-3, 3)) +
-        ylab("log2(tumor/normal)") +
-        xlab("GC [%]") +
-        theme_pubr()
-    return(plt)
-}
+## plotGC <- function(cnv) {
+##     tmp <- as.data.table(mcols(cnv$tile))
+##     tmp <- melt(tmp[,.(gc, blacklist, target, lr.raw, lr.gc, lr.off=lr.raw-lr.gc)], id.vars=c("gc", "blacklist", "target"))
+##     tmp[,delta:=FALSE]
+##     tmp[variable=="lr.off", delta:=TRUE]
+##     tmp[variable=="lr.off", variable:="lr.raw"]
+##     tmp[,target.lab:=ifelse(target, "on-target", "off-target")]
+##     tmp[,lr.lab:=ifelse(variable=="lr.raw", "raw", "adjusted")]
+##     plt <- ggplot(tmp) + aes(x=gc, y=value, color=delta) +
+##         facet_grid(lr.lab~target.lab) +
+##         geom_point(alpha=0.05, size=0.1) +
+##         scale_color_manual(values=c("black", "red"), guide=FALSE) +
+##         scale_x_continuous(labels=scales::percent) +
+##         coord_cartesian(xlim=c(0.2, 0.8), ylim=c(-3, 3)) +
+##         ylab("log2(tumor/normal)") +
+##         xlab("GC [%]") +
+##         theme_pubr()
+##     return(plt)
+## }
 
-plotCNV <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
+plotCNV <- function(cnv, opts, sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
@@ -39,7 +39,7 @@ plotCNV <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov.dt <- data.table(
         chr=as.character(seqnames(cov)),
         pos=floor((start(cov)+end(cov))/2),
-        val=mcols(cov)[[sel.lr]],
+        val=mcols(cov)[["lr"]],
         type="COV",
         tgt=mcols(cov)[["target"]]
     )[!is.na(val)]
@@ -99,7 +99,7 @@ plotCNV <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     return(plt)
 }
 
-plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
+plotSeg <- function(cnv, opts, sel.chr=NULL) {
     if (is.null(sel.chr)) {
         sel.chr <- paste("chr", c(1:22, "X", "Y"), sep="")
     }
@@ -126,7 +126,7 @@ plotSeg <- function(cnv, opts, sel.lr="lr.smooth", sel.chr=NULL) {
     cov.dt <- data.table(
         chr=as.character(seqnames(cov)),
         pos=floor((start(cov)+end(cov))/2),
-        val=mcols(cov)[[sel.lr]],
+        val=mcols(cov)[["lr"]],
         type="COV",
         seg=cov$seg,
         tgt=mcols(cov)[["target"]]

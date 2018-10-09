@@ -17,6 +17,14 @@
     return(lr.raw)
 }
 
+.scaleLogRatio <- function(lr, gt, opts) {
+    weight <- width(gt)
+    target <- gt$target
+    lr[ target] <- lr[ target] - weighted.mean(lr[ target], weight[ target], na.rm=TRUE)
+    lr[!target] <- lr[!target] - weighted.mean(lr[!target], weight[!target], na.rm=TRUE)
+    return(lr)
+}
+
 .gcLogRatio <- function(lr, gt, opts) {
     ## normalize, smooth, and gc-correct
     if (opts$gc.adjust.trend) {

@@ -156,7 +156,6 @@ analyze <- function() {
 
     if (!is.null(args$pool)) {
         if (file.exists(args$pool)) {
-            write("Importing pool ...", stderr())
             pool <- readRDS(args$pool)
         } else {
             optparse::print_help(parser)
@@ -167,9 +166,7 @@ analyze <- function() {
         pool <- NULL
     }
     
-    write("Computing and correcting coverage-ratio...", stderr())
     cnv <- addLogRatio(cnv, pool, opts)
-    write("Computing segmentation...", stderr())
     cnv <- addSegment(cnv, opts)
     
     if (is.null(args$out)) {
@@ -260,9 +257,6 @@ plot <- function() {
         optparse::make_option(c("-t", "--type"), type="character",
                               default="cnv",
                               help="Plot type"),
-        optparse::make_option(c("-l", "--lr"), type="character",
-                              default="lr.smooth",
-                              help="log2ration type [lr, lr.gc, lr.smooth]"),
         optparse::make_option(c("-i", "--inp"), type="character",
                               default=NULL,
                               help="Input CNVEX file"),
@@ -312,12 +306,12 @@ plot <- function() {
         })
     }
     if (args$type=="cnv") {
-        plt <- plotCNV(cnv, opts, sel.lr = args$lr, sel.chr = args$chr)
+        plt <- plotCNV(cnv, opts, sel.chr = args$chr)
         if (is.null(args$out)) {
             if (is.null(args$chr)) {
-                args$out <- str_replace(args$inp, ".rds$", sprintf("-cnv-%s.png", args$lr))
+                args$out <- str_replace(args$inp, ".rds$", "-cnv.png")
             } else {
-                args$out <- str_replace(args$inp, ".rds$", sprintf("-cnv-%s-%s.png", args$lr, args$chr))
+                args$out <- str_replace(args$inp, ".rds$", sprintf("-cnv-%s.png", args$chr))
             }
         }
         dummy <- capture.output({

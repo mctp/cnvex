@@ -137,13 +137,13 @@
     return(pool)
 }
 
-
 .poolIcaDenoise <- function(cnv, pool, opts) {
     sex <- .detect.sex(cnv$var, cnv$tile)
     S <- pool$projection[,seq(1,opts$pool.n.comp)]
     lr <- log2(cnv$tile$t.cov / pool$cov.med[,sex])
     x <- .fixLogRatioBounds(lr[pool$filter])
-    lr[ pool$filter] <- x - as.vector(tcrossprod(x %*% t(ginv(S)), S))
+    x <- x - as.vector(tcrossprod(x %*% t(ginv(S)), S))
+    lr[ pool$filter] <- x
     lr[!pool$filter] <- NA_real_
     return(lr)
 }
@@ -153,7 +153,8 @@
     P <- pool$projection[,seq(1,opts$pool.n.comp)]
     lr <- log2(cnv$tile$t.cov / pool$cov.med[,sex])
     x <- .fixLogRatioBounds(lr[pool$filter])
-    lr[ pool$filter] <- x - as.vector(tcrossprod(x %*% P, P))
+    x <- x - as.vector(tcrossprod(x %*% P, P))
+    lr[ pool$filter] <- x
     lr[!pool$filter] <- NA_real_
     return(lr)
 }
