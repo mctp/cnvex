@@ -36,6 +36,8 @@ load <- function() {
 
     args <- optparse::parse_args(parser, positional_arguments=FALSE)
     args$vcf <- c(genome=args$gvcf, target=args$evcf)
+    args$tumor <- str_split(args$tumor, ",|;")[[1]]
+    args$normal <- str_split(args$normal, ",|;")[[1]]
     
     config <- resolveConfig(args$config)
     if (config=="") {
@@ -93,7 +95,6 @@ pool <- function() {
         quit("no", 1)
     }
     opts <- getOpts(config, opts=list(cores=args$options$cores))
-
     if (length(args$args) < 2) {
         optparse::print_help(parser)
         write("Multiple CNVEX input files required.\n", stderr())

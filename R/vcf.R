@@ -19,12 +19,16 @@
     info(var)$mask.loose <- as.integer(!(var %over% pilot))
     info(var)$mask.strict <- as.integer(!(var %over% strict))
     qual(var) <- ifelse(is.na(qual(var)), 0, qual(var))
+    ## ignore multi-allelics
+    var <- var[
+        elementNROWS(fixed(var)$ALT) == 1
+    ]
     return(var)
 }
 
 .importVcfVarDict <- function(vcf, opts) {
     param <-ScanVcfParam(
-        info=c("STATUS", "SOMATIC", "TYPE"),
+        info=c("SOMATIC", "TYPE"),
         geno=c("GT", "AF", "DP", "QUAL")
     )
     if (!is.null(opts$which)) {
@@ -39,12 +43,41 @@
     var.gr$mask.loose <- info(var)$mask.loose
     var.gr$mask.strict <- info(var)$mask.strict
     var.gr$SOMATIC <- info(var)$SOMATIC
-    var.gr$STATUS <- info(var)$STATUS
     var.gr$TYPE <- info(var)$TYPE
     var.gr$t.GT <- geno(var)$GT[,1]
     var.gr$n.GT <- geno(var)$GT[,2]
     var.gr$t.AF <- geno(var)$AF[,1]
     var.gr$n.AF <- geno(var)$AF[,2]
+    var.gr$t.DP <- geno(var)$DP[,1]
+    var.gr$n.DP <- geno(var)$DP[,2]
+    return(var.gr)
+}
+
+.importVcfHC <- function(vcf, opts) {
+    param <-ScanVcfParam(
+        info=c("AF"),
+        geno=c("GT", "AD", "DP", "GQ")
+    )
+    if (!is.null(opts$which)) {
+        vcfWhich(param) <- which
+    }
+    .importVcf(vcf, param, opts)
+}
+
+.importHC <- function(vcf, opts) {
+    var <- .importVcfHC(vcf, opts)
+    var.gr <- rowRanges(var)
+    var.gr$mask.loose <- info(var)$mask.loose
+    var.gr$mask.strict <- info(var)$mask.strict
+    var.gr$SOMATIC <- FALSE
+    is.snv <- width(fixed(var)$REF)==1 & width(unlist(fixed(var)$ALT))==1
+    var.gr$TYPE <- ifelse(is.snv, "SNV", "Other")
+    t.AD <- sapply(geno(var)$AD[,1], "[", 2)
+    n.AD <- sapply(geno(var)$AD[,2], "[", 2)
+    var.gr$t.GT <- geno(var)$GT[,1]
+    var.gr$n.GT <- geno(var)$GT[,2]
+    var.gr$t.AF <- t.AD / geno(var)$DP[,1]
+    var.gr$n.AF <- n.AD / geno(var)$DP[,2]
     var.gr$t.DP <- geno(var)$DP[,1]
     var.gr$n.DP <- geno(var)$DP[,2]
     return(var.gr)
@@ -56,6 +89,13 @@ importVcf <- function(vcf, opts) {
         var <- unlist(GRangesList(unname(lapply(names(vcf), function(name) {
             fn <- vcf[[name]]
             v <- .importVarDict(fn, opts)
+            mcols(v)$SOURCE <- name
+            return(v)
+        }))))
+    } else if (opts$caller=="hc") {
+        var <- unlist(GRangesList(unname(lapply(names(vcf), function(name) {
+            fn <- vcf[[name]]
+            v <- .importHC(fn, opts)
             mcols(v)$SOURCE <- name
             return(v)
         }))))

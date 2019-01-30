@@ -11,7 +11,7 @@
     out.fn <- list.files(dirname(prefix), paste0(basename(prefix), ".regions.bed.gz$"),
                          full.names = TRUE)
     if (!ret & file.exists(out.fn)) {
-        out <- fread(paste("zcat", out.fn))[[out.col]]
+        out <- fread(out.fn)[[out.col]]
     } else {
         stop(sprintf("mosdepth run failed: %s", ret))
     }
@@ -23,10 +23,17 @@
     return(out)
 }
 
-.runMosdepthTile <- function(bam, gt, cores) {
+.runMosdepthMulti <- function(bams, ...) {
+    out <- rowSums(mapply(FUN=function(bam) {
+        out1 <- .runMosdepth(bam, ...)
+    }, bams))
+    return(out)
+}
+
+.runMosdepthTile <- function(bams, gt, cores) {
     bed <- tempfile("mosdepth_", fileext=".bed")
     export(granges(gt), bed)
-    out <- .runMosdepth(bam, bed, cores)
+    out <- .runMosdepthMulti(bams, bed, cores)
     unlink(bed)
     return(out)
 }
