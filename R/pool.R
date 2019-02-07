@@ -108,9 +108,9 @@
 }
 
 .importPoolData <- function(cnv.fns, opts) {
-    cnvs <- mclapply(cnv.fns, function(fn) {
+    cnvs <- lapply(cnv.fns, function(fn) {
         cnv <- readRDS(fn)
-    }, mc.cores=opts$cores)
+    })
     cov <- do.call(cbind, lapply(cnvs, function(cnv) cnv$tile$n.cov))
     sex <- sapply(cnvs, function(cnv) .detect.sex(cnv$var, cnv$tile))
     sex.chr <- as.logical(as.character(seqnames(cnvs[[1]]$tile)) %in% c("chrX", "chrY"))
